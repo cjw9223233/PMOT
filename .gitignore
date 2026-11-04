@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env*
+!.env.example
+.pytest_cache/
+/evidence/
+/reports/
+scripts/build_20261104_report.py
+.DS_Store
+Thumbs.db
+*.log
+/tmp/
+

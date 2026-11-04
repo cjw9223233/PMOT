@@ -1,0 +1,81 @@
+name: Daily market report and GitHub Pages
+
+on:
+  schedule:
+    - cron: '30 8 * * *'
+      timezone: Asia/Taipei
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'pmot/**'
+      - 'site/assets/**'
+      - 'site/prompt.md'
+      - 'site/data/reports.json'
+      - '.github/workflows/daily-report.yml'
+      - 'tests/**'
+
+concurrency:
+  group: pmot-pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: write
+    outputs:
+      changed: ${{ steps.report.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Verify market parsing and publication safeguards
+        run: python -m unittest discover -s tests -v
+      - name: Update on trading day, or rebuild after source changes
+        id: report
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        shell: bash
+        run: |
+          if [ "$EVENT_NAME" = "push" ]; then
+            python -m pmot build
+          else
+            python -m pmot update
+          fi
+      - name: Save immutable report and source audit
+        if: steps.report.outputs.changed == 'true'
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add site
+          if ! git diff --cached --quiet; then
+            git commit -m 'Update premarket report [skip ci]'
+            git push
+          fi
+      - name: Package website
+        if: steps.report.outputs.changed == 'true'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+  deploy:
+    if: needs.build.outputs.changed == 'true'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy website
+        id: deployment
+        uses: actions/deploy-pages@v4
