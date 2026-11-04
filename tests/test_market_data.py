@@ -6,7 +6,7 @@ from unittest import TestCase
 from unittest.mock import patch
 import json
 
-from pmot.sources import TAIPEI, NEW_YORK, number, parse_calendar, parse_date, parse_yahoo, parse_dxy, parse_treasury, parse_tx, check_notices
+from pmot.sources import TAIPEI, NEW_YORK, number, parse_calendar, parse_date, parse_yahoo, parse_dxy, parse_treasury, parse_tx, check_notices, parse_tsm_history
 from pmot.render import page, render_report, publish
 
 NOW = datetime(2026, 11, 4, 8, 30, tzinfo=TAIPEI)
@@ -91,6 +91,13 @@ class QuoteTests(TestCase):
     def test_dxy_future_timestamp_rejected(self):
         c=chart('DX-Y.NYB');c['chart']['result'][0]['meta']['regularMarketTime']=timestamp(2026,11,4,16)
         with self.assertRaises(ValueError): parse_dxy(c,NOW)
+
+    def test_tsm_backup_uses_unadjusted_close_not_after_hours(self):
+        text='<p>NYSE: TSM USD After-hours 999</p><table><tr><td>Nov 3, 2026</td><td>100</td><td>110</td><td>99</td><td>104</td><td>102</td><td>4%</td><td>10</td></tr><tr><td>Nov 2, 2026</td><td>99</td><td>101</td><td>98</td><td>100</td><td>98</td><td>1%</td><td>10</td></tr></table>'
+        r=parse_tsm_history(text,NOW)
+        self.assertEqual(r['value'],104)
+        self.assertEqual(r['previous'],100)
+        self.assertAlmostEqual(r['percent'],4)
 
 
 class FuturesAndYieldTests(TestCase):

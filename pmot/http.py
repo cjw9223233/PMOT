@@ -49,4 +49,3 @@ def parallel(tasks):
             return key, {'ok': False, 'error': str(exc), 'value': None}
     with ThreadPoolExecutor(max_workers=min(len(tasks), 8)) as pool:
         return dict(pool.map(run, tasks.items()))
-

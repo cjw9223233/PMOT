@@ -166,4 +166,3 @@ def publish(data, site):
     entries.sort(key=lambda x: x['generated_at'], reverse=True)
     manifest.write_text(json.dumps(entries, ensure_ascii=False, indent=2), encoding='utf-8')
     build_index(site)
-

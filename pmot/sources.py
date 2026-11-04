@@ -155,8 +155,8 @@ def parse_yahoo(payload, symbol, now, is_index=False):
     meta = item['meta']
     market_time = datetime.fromtimestamp(meta['regularMarketTime'], timezone.utc).astimezone(tz)
     if market_time.date() != d or market_time > now:
-        raise ValueError('Latest regular session does not match daily close')
-    return {'ok': True, 'symbol': symbol, 'value': value, 'previous': previous, 'previous_date': previous_date.isoformat(), 'date': d.isoformat(), 'change': value - previous, 'percent': (value / previous - 1) * 100, 'unit': '點' if is_index else meta.get('currency', 'USD'), 'time': f'{d} 16:00 {session_end.tzname()}（一般交易時段終點）', 'status': '已完成交易日收盤；日線資料，非盤後', 'calculation': '漲跌自行計算：本日收盤 − 前日收盤；漲跌幅＝差額 ÷ 前日收盤 × 100。交易所最後一筆成交時分未另提供。'}
+        raise ValueError(f'Latest regular session {market_time.isoformat()} does not match daily close {d}')
+    return {'ok': True, 'symbol': symbol, 'value': value, 'previous': previous, 'previous_date': previous_date.isoformat(), 'date': d.isoformat(), 'change': value - previous, 'percent': (value / previous - 1) * 100, 'unit': '點' if is_index else meta.get('currency', 'USD'), 'time': f'{market_time.isoformat()}（來源常規行情最後更新，非保證最後一筆成交時間）', 'status': '已完成交易日收盤；日線資料，非盤後', 'calculation': '漲跌自行計算：本日收盤 − 前日收盤；漲跌幅＝差額 ÷ 前日收盤 × 100。交易所最後一筆成交時分未另提供；不假定提早收盤日也在 16:00 收盤。'}
 
 
 def yahoo_close(fetch, symbol, now, is_index=False):
@@ -169,7 +169,39 @@ def yahoo_close(fetch, symbol, now, is_index=False):
             return data
         except Exception as exc:
             failures.append(str(exc))
+    if symbol == 'TSM':
+        url = 'https://stockanalysis.com/stocks/tsm/history/'
+        try:
+            data = parse_tsm_history(fetch.text(url), now)
+            data['sources'] = [url, 'https://finance.yahoo.com/quote/TSM/']
+            data['calculation'] += ' Yahoo 的常規行情日期與日線不一致，本次改採日期別歷史表。'
+            return data
+        except Exception as exc:
+            failures.append('Stock Analysis: ' + str(exc))
     raise ValueError('Yahoo 兩個行情端點均未確認：' + '；'.join(failures))
+
+
+def parse_tsm_history(text, now):
+    table = Tables(); table.feed(text)
+    if 'USD' not in ' '.join(table.words):
+        raise ValueError('TSM currency not confirmed')
+    rows = []
+    for row in table.rows:
+        if len(row) < 8:
+            continue
+        try:
+            d = datetime.strptime(row[0], '%b %d, %Y').date()
+        except ValueError:
+            continue
+        if datetime.combine(d, time(16), NEW_YORK) + timedelta(minutes=10) <= now:
+            rows.append((d, number(row[4])))
+    rows = sorted(dict(rows).items())
+    if len(rows) < 2:
+        raise ValueError('Two completed TSM historical closes unavailable')
+    (prior, previous), (d, value) = rows[-2:]
+    if previous <= 0 or value <= 0 or (now.astimezone(NEW_YORK).date() - d).days > 4:
+        raise ValueError('TSM historical closes are stale or invalid')
+    return {'ok': True, 'symbol': 'TSM', 'value': value, 'previous': previous, 'previous_date': prior.isoformat(), 'date': d.isoformat(), 'change': value - previous, 'percent': (value / previous - 1) * 100, 'unit': 'USD', 'time': f'{d}（美東交易日；日期別正式收盤，精確更新時分未提供）', 'status': 'Stock Analysis 歷史表 Close 欄；不採 Adj. Close 或盤後價格', 'calculation': '漲跌與百分比自行計算，以同一歷史表的前一交易日未調整 Close 為基準。'}
 
 
 def parse_dxy(payload, now):
