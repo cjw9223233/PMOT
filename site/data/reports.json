@@ -1,6 +1,13 @@
 [
   {
     "date": "2026-11-04",
+    "generated_at": "2026-11-04T13:47:57+08:00",
+    "content": "data/2026-11-04_134757.html",
+    "path": "reports/2026-11-04_134757.html",
+    "status": "verified"
+  },
+  {
+    "date": "2026-11-04",
     "generated_at": "2026-11-04T09:43:55+08:00",
     "content": "data/2026-11-04_094355.html",
     "path": "reports/2026-11-04_094355.html",
