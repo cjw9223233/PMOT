@@ -1,10 +1,12 @@
 name: Validate source changes
+# PR 執行驗證；main 指定程式／測試變更也驗證。這個流程沒有部署工作。
 on:
   pull_request:
   push:
     branches: [main]
     paths: ['pmot/**', 'tests/**', '.github/workflows/ci.yml']
 permissions:
+  # 檢查來源只需要讀取 repo，不需要寫入報告或 Pages 權限。
   contents: read
 jobs:
   test:
@@ -16,4 +18,5 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m unittest discover -s tests -v
+      # 驗證現有清單能重建首頁，不會查詢真實行情或發布到正式網站。
       - run: python -m pmot build

@@ -1,4 +1,8 @@
-"""Synthetic fixtures test data safeguards, not live market quotations."""
+"""用合成資料測試邊界條件，不把測試數字當真實市場報價。
+
+TestCase 的 test_* 會由 unittest 自動發現；固定 NOW 讓測試不隨今日時間變動。
+patch 替換外部判斷，TemporaryDirectory 隔離寫檔，測試不需要抓真實行情。
+"""
 from datetime import datetime, date, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -13,18 +17,22 @@ NOW = datetime(2026, 11, 4, 8, 30, tzinfo=TAIPEI)
 
 
 def timestamp(y, m, d, hour=9, minute=30):
+    """由美東日期建立 Unix 秒數，讓 fixture 經過與真實行情相同的時區轉換。"""
     return int(datetime(y, m, d, hour, minute, tzinfo=NEW_YORK).timestamp())
 
 
 def chart(symbol='TSM'):
+    """建立最小 Yahoo chart 合成回應；100／104 只用來驗算 4% 的公式。"""
     return {'chart': {'result': [{'meta': {'symbol': symbol, 'currency': 'USD', 'regularMarketTime': timestamp(2026, 11, 3, 16, 0), 'regularMarketPrice': 104}, 'timestamp': [timestamp(2026, 11, 2), timestamp(2026, 11, 3)], 'indicators': {'quote': [{'close': [100, 104]}]}}]}}
 
 
 def night_html(session='2026/11/03 15:00~次日05:00 盤後交易時段行情表', official='2026/11/04'):
+    """同時放單式與價差合約，檢驗解析器能排除價差，不只是讀到任意一列 TX。"""
     return f'<p>日期：{official}</p><p>{session}</p><table><tr><td>TX</td><td>202611</td><td>100</td><td>106</td><td>98</td><td>104</td><td>▲4</td><td>▲4.00%</td><td>10</td><td>-</td></tr><tr><td>TX</td><td>202611/202612</td><td>2</td><td>3</td><td>1</td><td>2</td><td>1</td><td>1%</td><td>4</td></tr></table>'
 
 
 class CalendarTests(TestCase):
+    """保護正常開市註記、休市、年度切換與公告保守門檻。"""
     def payload(self):
         return {'stat': 'ok', 'data': [[f'2026-01-{d:02}', '假日', ''] for d in range(1, 11)] + [['2026-02-11', '農曆春節前最後交易日', ''], ['2026-02-23', '農曆春節後開始交易日', '']]}
 
@@ -58,6 +66,7 @@ class CalendarTests(TestCase):
 
 
 class QuoteTests(TestCase):
+    """保護商品、完成日線、DST、DXY 基準及 ADR 備援，拒收過期或未來時間。"""
     def test_numeric_units_and_signs(self):
         self.assertEqual(number('▼-286'), -286)
         self.assertEqual(number('▲1,234.50%'), 1234.5)
@@ -101,6 +110,7 @@ class QuoteTests(TestCase):
 
 
 class FuturesAndYieldTests(TestCase):
+    """保護夜盤歸屬／實際結束日及殖利率單位，避免看似合理但口徑錯誤的數字。"""
     def test_night_session_uses_actual_contract_not_spread(self):
         r=parse_tx(night_html(),NOW)
         self.assertEqual(r['contract'],'202611')
@@ -126,7 +136,9 @@ class FuturesAndYieldTests(TestCase):
 
 
 class PublicationTests(TestCase):
+    """保護缺值顯示、HTML 跳脫、歷史防重複與不應發布時保留舊首頁。"""
     def data(self):
+        """製作全部缺漏的完整報告結構；error 故意含 script，測試顯示時會跳脫。"""
         missing={'ok':False,'error':'來源未更新 <script>alert(1)</script>','sources':['https://example.com/']}
         return {'date':'2026-11-04','generated_at':'2026-11-04T08:35:00+08:00','cutoff':'2026-11-04T08:34:58+08:00','gate':{'reason':'官方行事曆','calendar_url':'https://www.twse.com.tw/','notice_url':'https://openapi.twse.com.tw/'},'quotes':{k:dict(missing) for k in ['sp500','nasdaq','dow','tsm','sox','tx','spot','treasury','dxy']}}
 
