@@ -1,0 +1,241 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-05",
+  "scheduled_time": "08:30 Asia/Taipei",
+  "cutoff": "2026-11-05T15:11:31+08:00",
+  "generated_at": "2026-11-05T15:11:31+08:00",
+  "gate": {
+    "open": true,
+    "reason": "TWSE 當年度行事曆未列休市",
+    "calendar_url": "https://www.twse.com.tw/rwd/zh/holidaySchedule/holidaySchedule?response=json&queryYear=115",
+    "notice_url": "https://openapi.twse.com.tw/v1/news/newsList",
+    "scanned_notices": []
+  },
+  "quotes": {
+    "sp500": {
+      "ok": true,
+      "symbol": "^GSPC",
+      "value": 7688.6201171875,
+      "previous": 7568.919921875,
+      "previous_date": "2026-11-03",
+      "date": "2026-11-04",
+      "change": 119.7001953125,
+      "percent": 1.5814699659663978,
+      "unit": "點",
+      "time": "2026-11-04T16:51:11-05:00（來源常規行情最後更新，非保證最後一筆成交時間）",
+      "status": "已完成交易日收盤；日線資料，非盤後",
+      "calculation": "漲跌自行計算：本日收盤 − 前日收盤；漲跌幅＝差額 ÷ 前日收盤 × 100。交易所最後一筆成交時分未另提供；不假定提早收盤日也在 16:00 收盤。",
+      "sources": [
+        "https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?range=1mo&interval=1d",
+        "https://finance.yahoo.com/quote/%5EGSPC/"
+      ]
+    },
+    "nasdaq": {
+      "ok": true,
+      "symbol": "^IXIC",
+      "value": 25736.509765625,
+      "previous": 25372.009765625,
+      "previous_date": "2026-11-03",
+      "date": "2026-11-04",
+      "change": 364.5,
+      "percent": 1.4366224960776997,
+      "unit": "點",
+      "time": "2026-11-04T17:15:59-05:00（來源常規行情最後更新，非保證最後一筆成交時間）",
+      "status": "已完成交易日收盤；日線資料，非盤後",
+      "calculation": "漲跌自行計算：本日收盤 − 前日收盤；漲跌幅＝差額 ÷ 前日收盤 × 100。交易所最後一筆成交時分未另提供；不假定提早收盤日也在 16:00 收盤。",
+      "sources": [
+        "https://query1.finance.yahoo.com/v8/finance/chart/%5EIXIC?range=1mo&interval=1d",
+        "https://finance.yahoo.com/quote/%5EIXIC/"
+      ]
+    },
+    "dow": {
+      "ok": true,
+      "symbol": "^DJI",
+      "value": 53356.12109375,
+      "previous": 51786.71875,
+      "previous_date": "2026-11-03",
+      "date": "2026-11-04",
+      "change": 1569.40234375,
+      "percent": 3.030511261635005,
+      "unit": "點",
+      "time": "2026-11-04T16:51:20-05:00（來源常規行情最後更新，非保證最後一筆成交時間）",
+      "status": "已完成交易日收盤；日線資料，非盤後",
+      "calculation": "漲跌自行計算：本日收盤 − 前日收盤；漲跌幅＝差額 ÷ 前日收盤 × 100。交易所最後一筆成交時分未另提供；不假定提早收盤日也在 16:00 收盤。",
+      "sources": [
+        "https://query1.finance.yahoo.com/v8/finance/chart/%5EDJI?range=1mo&interval=1d",
+        "https://finance.yahoo.com/quote/%5EDJI/"
+      ]
+    },
+    "tsm": {
+      "ok": true,
+      "symbol": "TSM",
+      "value": 395.75,
+      "previous": 404.79998779296875,
+      "previous_date": "2026-11-03",
+      "date": "2026-11-04",
+      "change": -9.04998779296875,
+      "percent": -2.235668988606121,
+      "unit": "USD",
+      "time": "2026-11-04T16:00:02-05:00（來源常規行情最後更新，非保證最後一筆成交時間）",
+      "status": "已完成交易日收盤；日線資料，非盤後",
+      "calculation": "漲跌自行計算：本日收盤 − 前日收盤；漲跌幅＝差額 ÷ 前日收盤 × 100。交易所最後一筆成交時分未另提供；不假定提早收盤日也在 16:00 收盤。",
+      "sources": [
+        "https://query1.finance.yahoo.com/v8/finance/chart/TSM?range=1mo&interval=1d",
+        "https://finance.yahoo.com/quote/TSM/"
+      ]
+    },
+    "sox": {
+      "ok": true,
+      "symbol": "^SOX",
+      "value": 10268.650390625,
+      "previous": 10600.400390625,
+      "previous_date": "2026-11-03",
+      "date": "2026-11-04",
+      "change": -331.75,
+      "percent": -3.12959876773522,
+      "unit": "點",
+      "time": "2026-11-04T17:15:59-05:00（來源常規行情最後更新，非保證最後一筆成交時間）",
+      "status": "已完成交易日收盤；日線資料，非盤後",
+      "calculation": "漲跌自行計算：本日收盤 − 前日收盤；漲跌幅＝差額 ÷ 前日收盤 × 100。交易所最後一筆成交時分未另提供；不假定提早收盤日也在 16:00 收盤。",
+      "sources": [
+        "https://query1.finance.yahoo.com/v8/finance/chart/%5ESOX?range=1mo&interval=1d",
+        "https://finance.yahoo.com/quote/%5ESOX/"
+      ]
+    },
+    "tx": {
+      "ok": true,
+      "symbol": "TX",
+      "contract": "202611",
+      "value": 43404.0,
+      "change": 201.0,
+      "percent": 0.47,
+      "open": 43430.0,
+      "high": 44274.0,
+      "low": 43141.0,
+      "date": "2026-11-05",
+      "session_start": "2026-11-04 15:00 +08:00",
+      "session_end": "2026-11-05T05:00:00+08:00",
+      "time": "2026-11-05T05:00:00+08:00",
+      "unit": "點",
+      "status": "已結束的盤後交易時段；官方最後成交價，非結算價",
+      "calculation": "漲跌與百分比採期交所原欄位；比較基準定義未另行核實。最後一筆成交時分未提供，夜盤結束時間不等於最後成交時間。",
+      "sources": [
+        "https://www.taifex.com.tw/cht/3/futDailyMarketReport?queryType=2&marketCode=1&commodity_id=TX&queryDate=2026%2F11%2F05",
+        "https://www.tradingview.com/symbols/TAIFEX-TX1!/"
+      ]
+    },
+    "spot": {
+      "ok": true,
+      "date": "2026-11-04",
+      "value": 42948.91,
+      "sources": [
+        "https://openapi.twse.com.tw/v1/exchangeReport/FMTQIK"
+      ]
+    },
+    "treasury": {
+      "ok": true,
+      "symbol": "US 10Y",
+      "value": 4.9,
+      "previous": 4.95,
+      "date": "2026-11-04",
+      "previous_date": "2026-11-03",
+      "change": -0.04999999999999982,
+      "basis_points": -4.999999999999982,
+      "unit": "%",
+      "time": "官方每日值；精確發布時分未提供",
+      "status": "Treasury 10 Yr Par Yield Curve；非即時在券殖利率",
+      "calculation": "自行計算：百分點差 × 100 ＝ 基點。採官方百分比單位，未對未取得的 ^TNX 做乘除 10 換算。",
+      "sources": [
+        "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml?data=daily_treasury_yield_curve&field_tdr_date_value=2026",
+        "https://finance.yahoo.com/quote/%5ETNX/"
+      ]
+    },
+    "dxy": {
+      "ok": true,
+      "symbol": "DX-Y.NYB",
+      "value": 101.208,
+      "previous": 101.51000213623047,
+      "previous_date": "2026-11-04",
+      "date": "2026-11-05",
+      "time": "2026-11-05T15:01:28+08:00",
+      "change": -0.30200213623047034,
+      "percent": -0.2975097329080634,
+      "unit": "點",
+      "status": "最新行情快照；來源延遲狀態未確認，非正式收盤",
+      "calculation": "自行計算，以同來源上一個日期別收盤為比較基準。",
+      "sources": [
+        "https://query1.finance.yahoo.com/v8/finance/chart/DX-Y.NYB?range=1mo&interval=1d",
+        "https://www.tradingview.com/symbols/TVC-DXY/",
+        "https://finance.yahoo.com/quote/DX-Y.NYB/"
+      ]
+    }
+  },
+  "source_audit": [
+    {
+      "url": "https://www.twse.com.tw/rwd/zh/holidaySchedule/holidaySchedule?response=json&queryYear=115",
+      "retrieved_at": "2026-11-05T15:11:28.591403+08:00",
+      "status": "ok",
+      "sha256": "7fefe785ea7155a5004a2eb74486ad865ea5c4b5f02ee0cffbbdacb1ca2ea390"
+    },
+    {
+      "url": "https://openapi.twse.com.tw/v1/news/newsList",
+      "retrieved_at": "2026-11-05T15:11:29.274349+08:00",
+      "status": "ok",
+      "sha256": "21bbb7b3ce077911052fd40ad115252f1830a912934f366f52041ebe3905251c"
+    },
+    {
+      "url": "https://openapi.twse.com.tw/v1/exchangeReport/FMTQIK",
+      "retrieved_at": "2026-11-05T15:11:29.341161+08:00",
+      "status": "ok",
+      "sha256": "f64b904344ea3c3276b6c813e51da2634b7027356caff13036da4606ff24f1c8"
+    },
+    {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5EIXIC?range=1mo&interval=1d",
+      "retrieved_at": "2026-11-05T15:11:29.444274+08:00",
+      "status": "ok",
+      "sha256": "0575ced9899833200a654c8d343c8592caed49923713775add79bffaef0cb973"
+    },
+    {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5ESOX?range=1mo&interval=1d",
+      "retrieved_at": "2026-11-05T15:11:29.449507+08:00",
+      "status": "ok",
+      "sha256": "2d8d295b6a9d6a24d78640cc0c750373589d20534c2dcb581d629dc71966bfc6"
+    },
+    {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5EDJI?range=1mo&interval=1d",
+      "retrieved_at": "2026-11-05T15:11:29.450758+08:00",
+      "status": "ok",
+      "sha256": "85d37ff016e59f89637bff8ed10fecf35790698a9bef26dcd171373443ebe2ef"
+    },
+    {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?range=1mo&interval=1d",
+      "retrieved_at": "2026-11-05T15:11:29.453031+08:00",
+      "status": "ok",
+      "sha256": "e6083cd2b259f2d08454aa706de4a93aed5ab2e6dd432905660d8b404b7ecd15"
+    },
+    {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/TSM?range=1mo&interval=1d",
+      "retrieved_at": "2026-11-05T15:11:29.460240+08:00",
+      "status": "ok",
+      "sha256": "94758ec1bcb74e7b9703f40c02a2de050d87dca584002152073158278462083f"
+    },
+    {
+      "url": "https://query1.finance.yahoo.com/v8/finance/chart/DX-Y.NYB?range=1mo&interval=1d",
+      "retrieved_at": "2026-11-05T15:11:29.509655+08:00",
+      "status": "ok",
+      "sha256": "299689ebd3de83bcc07b88c9ba84b9ad9bd7c6a90bddc75b43cabe41ecba855e"
+    },
+    {
+      "url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml?data=daily_treasury_yield_curve&field_tdr_date_value=2026",
+      "retrieved_at": "2026-11-05T15:11:29.766942+08:00",
+      "status": "ok",
+      "sha256": "b8921ee08399e60444f198f4ea240712302e06a0bf112b738e44c46c0df63d1f"
+    },
+    {
+      "url": "https://www.taifex.com.tw/cht/3/futDailyMarketReport?queryType=2&marketCode=1&commodity_id=TX&queryDate=2026%2F11%2F05",
+      "retrieved_at": "2026-11-05T15:11:31.217102+08:00",
+      "status": "ok",
+      "sha256": "3c7f952bc498a0e29f7e8620f9398d109d00246dd1a2a71c96947349d3d07e55"
+    }
+  ]
+}
