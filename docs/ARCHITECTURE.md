@@ -8,7 +8,7 @@ PMOT 是一個「定時查資料、產生固定報告、發佈靜態網站」的
 
 ```mermaid
 flowchart TD
-    A[GitHub Actions 每日 08:30 或手動觸發] --> B[update：TWSE 行事曆與公告查核]
+    A[GitHub Actions 每日 08:00 或手動觸發] --> B[update：TWSE 行事曆與公告查核]
     B -->|確認休市| C[正常略過，保留最近報告]
     B -->|無法確認| D[工作失敗，停止新增報告]
     B -->|正常交易日| E[平行查詢九組資料]

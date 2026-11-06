@@ -1,10 +1,10 @@
 name: Daily market report and GitHub Pages
 
 # 三種觸發：每日排程、人工補跑、main 指定路徑更新。
-# 排程只是喚醒程式；是否正常交易日仍交給 Python 查核，08:30 不是保證完成時間。
+# 排程只是喚醒程式；是否正常交易日仍交給 Python 查核，08:00 不是保證完成時間。
 on:
   schedule:
-    - cron: '30 8 * * *'
+    - cron: '0 8 * * *'
       timezone: Asia/Taipei
   workflow_dispatch:
   push:

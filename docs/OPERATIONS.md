@@ -7,7 +7,7 @@
 ## 每日檢查（約 3 分鐘）
 
 1. 開啟 [Actions](https://github.com/cjw9223233/PMOT/actions)，找到 `Daily market report and GitHub Pages` 最新一次執行。
-2. 先判斷當日應為正常交易日、休市，還是官方狀態待確認。08:30 是觸發時間；不要單憑 08:30 沒有新頁面就判定故障。
+2. 先判斷當日應為正常交易日、休市，還是官方狀態待確認。08:00 是觸發時間；不要單憑 08:00 沒有新頁面就判定故障。
 3. 正常交易日查看 `build` 內的測試與更新步驟，再確認 `deploy` 是否成功。
 4. 開啟[網站](https://cjw9223233.github.io/PMOT/)，核對實際產出與資料截止時間、六項章節、缺漏提示及歷史選單。
 5. 若為 `partial`，逐項看來源錯誤與資料日期。不要因工作流程成功就認為所有數字都已取得。
@@ -45,7 +45,7 @@ gh run list --repo cjw9223233/PMOT --workflow daily-report.yml --limit 5
 
 `gh auth status` 不通過時先完成 GitHub 登入。不要將 token 複製到程式、文件、Issue 或終端機截圖。
 
-手動執行仍會查核交易日，沒有「強制休市產報告」選項。它會使用執行當下的行情與時間，不能拿下午補跑的結果冒充 08:30 的資訊集。[GitHub 手動工作流程文件](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)
+手動執行仍會查核交易日，沒有「強制休市產報告」選項。它會使用執行當下的行情與時間，不能拿下午補跑的結果冒充 08:00 的資訊集。[GitHub 手動工作流程文件](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)
 
 ## 如何找到失敗的原因？
 

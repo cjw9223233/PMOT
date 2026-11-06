@@ -87,6 +87,8 @@ def render_report(data):
     只根據已確認資料套用固定規則，不分析新聞、不保證市場因果或開盤方向。
     需保留六章順序、A／B／C 摘要與缺漏提示；新增資料時同步資料指南與測試。
     """
+    # 歷史報告保留當次原訂時間；新排程不能把舊報告的 08:30 改標成 08:00。
+    scheduled_clock = data.get('scheduled_time', '08:00 Asia/Taipei').split()[0]
     q = data['quotes']; blocks = []
     body = '<div class="index-grid">'
     for key, title in [('sp500', '標普 500 指數'), ('nasdaq', '那斯達克綜合指數'), ('dow', '道瓊工業平均指數')]:
@@ -144,10 +146,10 @@ def render_report(data):
     summary += '<div class="conclusion"><p>' + e(conclusion) + '</p></div></section>'
     blocks.append(summary)
     blocks.append('<section id="audit" class="market audit"><header class="section-head"><span class="number">i</span><div><h2>資料狀態與查核範圍</h2></div></header>' + note('事實', data['gate']['reason'] + '；已查官方新聞清單，未見需人工判讀的交易異動公告。') + note('不確定性', '官方清單可能有更新延遲；公告判讀採保守門檻。來源失敗保留缺漏，不以舊行情冒充新數字。判讀為固定規則的資料觀察，沒有捏造新聞或事件。') + links([data['gate']['calendar_url'], data['gate']['notice_url']]) + '</section>')
-    meta = key_values([('報告日期／交易狀態', data['date'] + ' · 正常交易日'), ('原訂排程時間', '每日 08:30 · Asia/Taipei'), ('實際產出時間', data['generated_at']), ('資料截止時間', data['cutoff'])])
+    meta = key_values([('報告日期／交易狀態', data['date'] + ' · 正常交易日'), ('原訂排程時間', f'每日 {scheduled_clock} · Asia/Taipei'), ('實際產出時間', data['generated_at']), ('資料截止時間', data['cutoff'])])
     missing = [k for k, v in q.items() if not v.get('ok')]
     late = data['generated_at'][11:16] >= '09:00'
-    alert = ('已逾 09:00 開盤時間，本報告不是 08:30 已完成的預測。' if late else '各市場資料時點不同，請依日期與交易狀態閱讀。')
+    alert = (f'已逾 09:00 開盤時間，本報告不是 {scheduled_clock} 已完成的預測。' if late else '各市場資料時點不同，請依日期與交易狀態閱讀。')
     if missing:
         alert += f' {len(missing)} 項來源資料未確認，詳見各節。'
     return meta + '<div class="alert"><b>' + e(alert) + '</b>資料只在排程執行時更新，開啟頁面不會混入新行情。</div>' + ''.join(blocks)
@@ -162,7 +164,7 @@ def page(content, title, assets='assets', is_index=False):
     nav = ''.join(f'<a href="#market-{i}"><span>{i:02}</span>{e(name)}</a>' for i, (name, _) in enumerate(NAMES, 1))
     nav += '<a href="#summary"><span>Σ</span>綜合判讀</a><a href="#audit"><span>i</span>資料查核範圍</a>'
     root = '' if is_index else '../'
-    return f'''<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>{e(title)}｜PMOT</title><link rel="stylesheet" href="{assets}/report.css"><link rel="icon" type="image/svg+xml" href="{assets}/favicon.svg"></head><body id="top" data-index="{str(is_index).lower()}"><div class="layout"><aside class="sidebar"><div class="brand"><span class="brand-mark">P</span>市場觀察筆記</div><div><p class="sidebar-label">台股交易日 · 08:30 更新</p><nav aria-label="報告章節">{nav}</nav></div><div class="sidebar-bottom">台股開盤前的外部市場訊號<br>保留每一項數據的實際時點。<a href="{root}prompt.md">檢視完整 prompt ↗</a><a href="https://github.com/cjw9223233/PMOT" target="_blank" rel="noopener noreferrer">GitHub 專案 ↗</a></div></aside><main class="content"><p class="eyebrow">TAIWAN MARKET · MORNING OBSERVATION</p><h1>台股開盤前<span>外部市場觀察報告</span></h1><p class="intro">美股、ADR、半導體、台指期、利率與美元；依實際交易時點檢視市場訊號。</p><div class="toolbar"><label for="report-picker">報告日期</label><select id="report-picker" aria-label="切換歷史報告"><option>載入報告清單…</option></select><button class="button primary" type="button" id="print-report">列印／另存 PDF</button><a class="button" href="{root}prompt.md">查看 prompt</a></div><p id="site-status" class="site-status" role="status">台股交易日 08:30 觸發更新；實際產出時間以報告為準。</p><div id="report-content">{content}</div><footer class="footer"><p>【事實】來源確認資料　【解讀】合理推論　【不確定性】缺漏、衝突或待驗證事項</p><p>本報告是市場觀察工具，不是保證行情方向的預測，也不是個別股票的買賣建議。</p><p>紅色表示上漲、綠色表示下跌，並保留正負號。休市日保留最近一份報告。</p></footer></main></div><a class="button back-top" href="#top">↑ 回頂端</a><script src="{assets}/app.js" defer></script></body></html>'''
+    return f'''<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>{e(title)}｜PMOT</title><link rel="stylesheet" href="{assets}/report.css"><link rel="icon" type="image/svg+xml" href="{assets}/favicon.svg"></head><body id="top" data-index="{str(is_index).lower()}"><div class="layout"><aside class="sidebar"><div class="brand"><span class="brand-mark">P</span>市場觀察筆記</div><div><p class="sidebar-label">台股交易日 · 08:00 更新</p><nav aria-label="報告章節">{nav}</nav></div><div class="sidebar-bottom">台股開盤前的外部市場訊號<br>保留每一項數據的實際時點。<a href="{root}prompt.md">檢視完整 prompt ↗</a><a href="https://github.com/cjw9223233/PMOT" target="_blank" rel="noopener noreferrer">GitHub 專案 ↗</a></div></aside><main class="content"><p class="eyebrow">TAIWAN MARKET · MORNING OBSERVATION</p><h1>台股開盤前<span>外部市場觀察報告</span></h1><p class="intro">美股、ADR、半導體、台指期、利率與美元；依實際交易時點檢視市場訊號。</p><div class="toolbar"><label for="report-picker">報告日期</label><select id="report-picker" aria-label="切換歷史報告"><option>載入報告清單…</option></select><button class="button primary" type="button" id="print-report">列印／另存 PDF</button><a class="button" href="{root}prompt.md">查看 prompt</a></div><p id="site-status" class="site-status" role="status">台股交易日 08:00 觸發更新；實際產出時間以報告為準。</p><div id="report-content">{content}</div><footer class="footer"><p>【事實】來源確認資料　【解讀】合理推論　【不確定性】缺漏、衝突或待驗證事項</p><p>本報告是市場觀察工具，不是保證行情方向的預測，也不是個別股票的買賣建議。</p><p>紅色表示上漲、綠色表示下跌，並保留正負號。休市日保留最近一份報告。</p></footer></main></div><a class="button back-top" href="#top">↑ 回頂端</a><script src="{assets}/app.js" defer></script></body></html>'''
 
 
 def build_index(site):
