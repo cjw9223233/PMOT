@@ -66,9 +66,9 @@ def update(site, now=None, fetch=None):
     # spot 只是夜盤的比較基準，單靠它成功不足以產出市場觀察報告。
     if not any(v.get('ok') for k, v in quotes.items() if k != 'spot'):
         raise ValueError('All market sources failed; retaining previous published report')
-    # 時間在查詢後重新讀取，不能把原訂 08:30 寫成實際完成時間。
+    # 時間在查詢後重新讀取，不能把原訂 08:00 寫成實際完成時間。
     cutoff = datetime.now(TAIPEI)
-    data = {'schema_version': 1, 'date': now.date().isoformat(), 'scheduled_time': '08:30 Asia/Taipei', 'cutoff': cutoff.isoformat(timespec='seconds'), 'generated_at': datetime.now(TAIPEI).isoformat(timespec='seconds'), 'gate': gate, 'quotes': quotes, 'source_audit': fetch.audit}
+    data = {'schema_version': 1, 'date': now.date().isoformat(), 'scheduled_time': '08:00 Asia/Taipei', 'cutoff': cutoff.isoformat(timespec='seconds'), 'generated_at': datetime.now(TAIPEI).isoformat(timespec='seconds'), 'gate': gate, 'quotes': quotes, 'source_audit': fetch.audit}
     # 檔案寫完才回報 changed=true，避免下載成功就誤觸發部署。
     publish(data, site)
     github_output(True)

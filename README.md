@@ -20,7 +20,7 @@
 ## 網站與執行方式
 
 - 網站：[cjw9223233.github.io/PMOT](https://cjw9223233.github.io/PMOT/)
-- 排程：每天 **08:30 Asia/Taipei** 觸發，先查核 TWSE 官方年度休市行事曆與新聞公告。正常交易日產出新報告，休市日保留最近報告。
+- 排程：每天 **08:00 Asia/Taipei** 觸發，先查核 TWSE 官方年度休市行事曆與新聞公告。正常交易日產出新報告，休市日保留最近報告。
 - 首頁為最新報告；日期選單可切換歷次報告，支援手機、章節導覽、分享選定日期與列印。
 - 每項區分【事實】【解讀】【不確定性】，附來源、實際日期時間、單位及計算口徑。無法確認的資料不補值。
 - 不需要 API 金鑰、LLM 或本地電腦持續開機。解讀為固定規則，不自動捏造市場事件。
@@ -31,7 +31,7 @@
 
 程式使用 Python 3.12 標準函式庫；Windows 若缺 IANA 時區資料，需要在虛擬環境安裝 `tzdata`，步驟見快速上手。行情來源可能限流；每一項各自失敗時列「資料未確認」。全部市場來源失敗、交易日無法確認或近期有需人工判讀的休市公告時，會在產出新報告前停止。官方新聞清單的異動檢查採保守門檻，可能需要人工確認；不得把未確認狀態當作正常開市。檔案寫入中斷的限制與恢復方式見維運手冊。
 
-GitHub 排程可能延遲，**08:30 是觸發時間，不是保證完成時間**。報告以實際完成與資料截止時間為準；逾 09:00 時自動標示。公開儲存庫的排程可能因長期無活動而停用，需於 Actions 檢查狀態。[GitHub 排程說明](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
+GitHub 排程可能延遲，**08:00 是觸發時間，不是保證完成時間**。報告以實際完成與資料截止時間為準；逾 09:00 時自動標示。公開儲存庫的排程可能因長期無活動而停用，需於 Actions 檢查狀態。[GitHub 排程說明](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
 
 ## 本機使用
 

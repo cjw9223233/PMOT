@@ -29,7 +29,7 @@
     // 訪客可能在其他時區；「今日報告」仍以台北日期判定，不改報告的原始日期。
     const today = new Intl.DateTimeFormat('sv-SE', {timeZone: 'Asia/Taipei'}).format(new Date());
     const old = entry.date !== today;
-    status.textContent = `${old ? '目前顯示歷史報告' : '目前顯示今日報告'}：${entry.date}｜產出 ${entry.generated_at.replace('T', ' ')}。${entry.status === 'partial' ? '部分資料未確認；' : ''}台股交易日 08:30 觸發，休市日保留最近報告。`;
+    status.textContent = `${old ? '目前顯示歷史報告' : '目前顯示今日報告'}：${entry.date}｜產出 ${entry.generated_at.replace('T', ' ')}。${entry.status === 'partial' ? '部分資料未確認；' : ''}台股交易日 08:00 觸發，休市日保留最近報告。`;
     status.classList.toggle('historical', old);
   }
 

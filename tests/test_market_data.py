@@ -140,7 +140,7 @@ class PublicationTests(TestCase):
     def data(self):
         """製作全部缺漏的完整報告結構；error 故意含 script，測試顯示時會跳脫。"""
         missing={'ok':False,'error':'來源未更新 <script>alert(1)</script>','sources':['https://example.com/']}
-        return {'date':'2026-11-04','generated_at':'2026-11-04T08:35:00+08:00','cutoff':'2026-11-04T08:34:58+08:00','gate':{'reason':'官方行事曆','calendar_url':'https://www.twse.com.tw/','notice_url':'https://openapi.twse.com.tw/'},'quotes':{k:dict(missing) for k in ['sp500','nasdaq','dow','tsm','sox','tx','spot','treasury','dxy']}}
+        return {'date':'2026-11-04','scheduled_time':'08:30 Asia/Taipei','generated_at':'2026-11-04T08:35:00+08:00','cutoff':'2026-11-04T08:34:58+08:00','gate':{'reason':'官方行事曆','calendar_url':'https://www.twse.com.tw/','notice_url':'https://openapi.twse.com.tw/'},'quotes':{k:dict(missing) for k in ['sp500','nasdaq','dow','tsm','sox','tx','spot','treasury','dxy']}}
 
     def test_missing_data_is_not_a_bullish_signal_or_html_injection(self):
         s=render_report(self.data())
@@ -161,6 +161,17 @@ class PublicationTests(TestCase):
             index=json.loads((site/'data'/'reports.json').read_text(encoding='utf-8'))
             self.assertEqual(len(index),1)
             with self.assertRaises(FileExistsError):publish(self.data(),site)
+
+    def test_new_schedule_and_late_notice_use_recorded_clock(self):
+        """變更排程只改新報告；實際完成時間與當次原訂時間分開保留。"""
+        data=self.data()
+        data['scheduled_time']='08:00 Asia/Taipei'
+        data['generated_at']='2026-11-04T09:05:00+08:00'
+        s=render_report(data)
+        self.assertIn('每日 08:00',s)
+        self.assertIn('不是 08:00 已完成的預測',s)
+        self.assertIn('09:05:00',s)
+        self.assertNotIn('08:30',s)
 
     def test_closed_day_does_not_touch_existing_index(self):
         from pmot.__main__ import update
