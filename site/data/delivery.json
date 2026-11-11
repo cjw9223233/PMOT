@@ -1,22 +1,22 @@
 {
-  "event": "push",
+  "event": "workflow_dispatch",
   "schedule": "",
   "target_at": "2026-11-11T08:00:00+08:00",
-  "workflow_started_at": "2026-11-11T01:09:57Z",
-  "run_created_at": "2026-11-11T01:09:57Z",
-  "prepared_at": "2026-11-11T09:10:04+08:00",
-  "decision": "deploy",
-  "run_url": "https://github.com/cjw9223233/PMOT/actions/runs/42936905632",
-  "run_id": "42936905632",
+  "workflow_started_at": "2026-11-11T01:11:01Z",
+  "run_created_at": "2026-11-11T01:11:01Z",
+  "prepared_at": "2026-11-11T09:11:10+08:00",
+  "decision": "generate",
+  "run_url": "https://github.com/cjw9223233/PMOT/actions/runs/42937043379",
+  "run_id": "42937043379",
   "run_attempt": "1",
-  "reason": "程式更新：重建既有報告",
+  "reason": "今日尚無報告",
   "report": {
-    "date": "2026-11-10",
-    "content": "data/2026-11-10_125226.html",
-    "sha256": "f1e33d9f240190e3dd507e4feac5390b450cf7e763a033fc6f385078f9bcd40d",
-    "website_sha256": "57bbd72e7c515a68e8891d08d4f1eca7f636d025fd8ab93cfa6eec84732b76e2"
+    "date": "2026-11-11",
+    "content": "data/2026-11-11_091114.html",
+    "sha256": "0ee844d441b21d88d66b06790a30e8cc85a9c89139e1f3b10356cd572eb05c40",
+    "website_sha256": "7160a6ab7bd69f04565be150272f6fbcb9f385b64a4f6b34e28c679555641740"
   },
-  "generated_at": "2026-11-10T12:52:26+08:00",
-  "deployment_requested_at": "2026-11-11T09:10:04+08:00",
+  "generated_at": "2026-11-11T09:11:14+08:00",
+  "deployment_requested_at": "2026-11-11T09:11:15+08:00",
   "status": "pending"
 }
