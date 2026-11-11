@@ -1,10 +1,13 @@
 name: Daily market report and GitHub Pages
 
-# 三種觸發：每日排程、人工補跑、main 指定路徑更新。
-# 排程只是喚醒程式；是否正常交易日仍交給 Python 查核，08:00 不是保證完成時間。
 on:
   schedule:
+    # 三個獨立喚醒機會；GitHub 排程仍可能延遲，不能當作準時保證。
     - cron: '0 8 * * *'
+      timezone: Asia/Taipei
+    - cron: '17 8 * * *'
+      timezone: Asia/Taipei
+    - cron: '37 8 * * *'
       timezone: Asia/Taipei
   workflow_dispatch:
   push:
@@ -17,76 +20,113 @@ on:
       - '.github/workflows/daily-report.yml'
       - 'tests/**'
 
-# 同一時間只執行一個發布流程；不取消進行中的寫檔／提交／部署。
+# build 到成功收據提交都序列化；補跑 checkout 時才能看到前次結果。
 concurrency:
   group: pmot-pages
   cancel-in-progress: false
-
 permissions:
   contents: read
-
 jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     permissions:
-      # 只在這個 job 提升內容寫入權限，用來保存真實報告與清單。
       contents: write
+      actions: read
     outputs:
-      # 把步驟的 changed 提升成 job 輸出，讓 deploy 決定是否執行。
-      changed: ${{ steps.report.outputs.changed }}
+      changed: ${{ steps.publish.outputs.changed }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: main
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - name: Verify market parsing and publication safeguards
+      - name: Verify market parsing and delivery safeguards
         run: python -m unittest discover -s tests -v
-      - name: Update on trading day, or rebuild after source changes
-        id: report
+      - name: Read actual GitHub run timestamps
         env:
-          EVENT_NAME: ${{ github.event_name }}
-        shell: bash
-        # push 重建既有快照；每日／人工執行才查新行情。
-        run: |
-          if [ "$EVENT_NAME" = "push" ]; then
-            python -m pmot build
-          else
-            python -m pmot update
-          fi
-      - name: Save immutable report and source audit
-        # 正常休市會輸出 false；該次不提交、不封裝、不部署。
-        if: steps.report.outputs.changed == 'true'
-        # 自動提交避免形成 push 執行循環；人工 PR 不應仿照跳過檢查。
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" > "$RUNNER_TEMP/run.json"
+          echo "RUN_CREATED_AT=$(jq -r .created_at "$RUNNER_TEMP/run.json")" >> "$GITHUB_ENV"
+          echo "RUN_STARTED_AT=$(jq -r .run_started_at "$RUNNER_TEMP/run.json")" >> "$GITHUB_ENV"
+      - name: Decide generate, retry deployment, or skip
+        id: prepare
+        env:
+          TRIGGER_SCHEDULE: ${{ github.event.schedule }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python -m pmot.delivery prepare
+      - name: Query fresh markets only when no report exists today
+        id: query
+        if: steps.prepare.outputs.action == 'generate'
+        run: python -m pmot update
+      - name: Record packaging time and save immutable report
+        id: publish
+        if: steps.prepare.outputs.action == 'deploy' || steps.query.outputs.changed == 'true'
+        shell: bash
+        run: |
+          python -m pmot.delivery package
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add site
           if ! git diff --cached --quiet; then
-            git commit -m 'Update premarket report [skip ci]'
-            git push
+            git commit -m 'Update premarket report and delivery timing [skip ci]'
+            git push origin HEAD:main
           fi
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
       - name: Package website
-        if: steps.report.outputs.changed == 'true'
+        if: steps.publish.outputs.changed == 'true'
         uses: actions/upload-pages-artifact@v4
         with:
           path: site
+      - name: Keep timing evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: delivery-timing-${{ github.run_attempt }}
+          path: delivery-timing.json
+          if-no-files-found: ignore
+          retention-days: 30
   deploy:
-    # needs 同時確保 build 成功，並能讀取它的 changed；不獨立猜測是否有新資料。
     if: needs.build.outputs.changed == 'true'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 8
     permissions:
-      # Pages 部署權限與短期 OIDC 身分；此 job 不需要 contents: write。
       pages: write
       id-token: write
+      contents: write
     environment:
-      # 連到 repo 的 Pages 環境及其保護規則，部署 URL 由官方 action 回傳。
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.retry.outputs.page_url }}
     steps:
+      # 單次最多等待 2 分鐘；暫時失敗在同次 run 再試一次。
       - name: Deploy website
         id: deployment
+        continue-on-error: true
         uses: actions/deploy-pages@v4
+        with:
+          timeout: 120000
+      - name: Retry website deployment
+        id: retry
+        if: steps.deployment.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        with:
+          timeout: 120000
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Save success receipt only after confirmed deployment
+        # 任何部署失敗都不會走到這一步；之後補跑將重用相同報告。
+        run: |
+          python -m pmot.delivery confirm --timing site/data/delivery.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .pmot/deployment.json
+          git commit -m 'Record confirmed Pages deployment [skip ci]'
+          git push origin HEAD:main

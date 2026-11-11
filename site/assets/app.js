@@ -9,6 +9,8 @@
   let observer;
   // 每次切換累加版本。較早但較慢的請求回來時，不應蓋掉使用者最新選擇。
   let requestVersion = 0;
+  let delivery;
+  let receipt;
   document.querySelector('#print-report').addEventListener('click', () => window.print());
 
   function bindNavigation() {
@@ -31,6 +33,35 @@
     const old = entry.date !== today;
     status.textContent = `${old ? '目前顯示歷史報告' : '目前顯示今日報告'}：${entry.date}｜產出 ${entry.generated_at.replace('T', ' ')}。${entry.status === 'partial' ? '部分資料未確認；' : ''}台股交易日 08:00 觸發，休市日保留最近報告。`;
     status.classList.toggle('historical', old);
+    const panel = document.querySelector('#delivery-status');
+    if (!panel) return;
+    panel.replaceChildren();
+    panel.hidden = true;
+    if (!delivery || delivery.report.content !== entry.content) return;
+    panel.hidden = false;
+    const time = value => value ? new Date(value).toLocaleString('zh-TW', {timeZone: 'Asia/Taipei', hour12: false}) : '未提供';
+    // 完成時間只能從部署成功後寫回的公開收據取得，不能在打包時預填。
+    const confirmed = receipt?.status === 'success' && receipt.run_id === delivery.run_id &&
+      receipt.run_attempt === delivery.run_attempt && receipt.report.sha256 === delivery.report.sha256 &&
+      receipt.report.website_sha256 === delivery.report.website_sha256;
+    panel.textContent = `本次交付（台北時間）｜啟動 ${time(delivery.workflow_started_at)}｜產出 ${time(delivery.generated_at)}｜部署準備 ${time(delivery.deployment_requested_at)}｜${confirmed ? '部署確認 ' + time(receipt.deployment_completed_at) : '部署完成時間未確認，請查看執行紀錄'}。`;
+    panel.classList.toggle('historical', !confirmed);
+    if (/^https:\/\/github\.com\/cjw9223233\/PMOT\/actions\/runs\/\d+$/.test(delivery.run_url)) {
+      const link = document.createElement('a');
+      link.href = delivery.run_url;
+      link.textContent = ' 查看執行紀錄 ↗';
+      panel.append(link);
+    }
+  }
+
+  async function loadDelivery() {
+    try {
+      const result = await fetch('data/delivery.json', {cache: 'no-store', signal: AbortSignal.timeout(5000)});
+      if (result.ok) delivery = await result.json();
+      // 純靜態網站的套件早於部署完成，故以 main 的成功收據補上確認時間。
+      const confirmed = await fetch('https://raw.githubusercontent.com/cjw9223233/PMOT/main/.pmot/deployment.json', {cache: 'no-store', signal: AbortSignal.timeout(5000)});
+      if (confirmed.ok) receipt = await confirmed.json();
+    } catch (_) { /* 收據連線失敗不影響報告閱讀；只顯示未確認。 */ }
   }
 
   async function start() {
@@ -46,6 +77,11 @@
     if (!response.ok) throw new Error('報告清單讀取失敗');
     const entries = await response.json();
     if (!Array.isArray(entries) || !entries.length) throw new Error('尚無報告');
+    // 不讓部署資訊網路請求阻塞市場報告；完成後更新目前選定報告的狀態。
+    loadDelivery().then(() => {
+      const selected = entries.find(item => item.content === picker.value);
+      if (selected) describe(selected);
+    });
     picker.replaceChildren(...entries.map(item => new Option(`${item.date} ${item.generated_at.slice(11, 16)}${item.status === 'partial' ? ' · 部分未確認' : ''}`, item.content)));
     const requested = new URL(location.href).searchParams.get('report');
 
