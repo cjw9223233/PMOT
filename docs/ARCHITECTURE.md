@@ -6,18 +6,27 @@
 
 PMOT 是一個「定時查資料、產生固定報告、發佈靜態網站」的程式。Python 負責查詢、驗證、判讀及產生檔案；瀏覽器的 JavaScript 負責切換歷史報告。使用者開啟網站不會觸發行情查詢。
 
+第一次閱讀可先看[自動化流程圖與分工](AUTOMATION.md)，其中六張圖分別解釋角色、每日決策、資料處理、部署恢復、前端及維護流程。下圖為程式架構摘要。
+
 ```mermaid
 flowchart TD
-    A[GitHub Actions 每日 08:00 或手動觸發] --> B[update：TWSE 行事曆與公告查核]
+    A[GitHub Actions 每日 08:00、08:17、08:37 或手動觸發] --> B[delivery prepare：TWSE 行事曆與公告查核]
     B -->|確認休市| C[正常略過，保留最近報告]
     B -->|無法確認| D[工作失敗，停止新增報告]
-    B -->|正常交易日| E[平行查詢九組資料]
+    B -->|正常交易日| CHECK{今日報告與成功收據是否相符？}
+    CHECK -->|已交付且相符| C
+    CHECK -->|有報告但未確認成功| REUSE[重用今日快照]
+    CHECK -->|無今日報告| E[update：再查交易日，平行查詢九組資料]
     E --> F[各來源驗證日期、數值、單位與時段]
     F -->|主要市場全部失敗| D
     F -->|至少一組主要資料成功| G[產生報告內容、獨立 HTML、JSON 與歷史清單]
     G --> H[重建首頁、提交 site、封裝部署檔]
-    H --> I[GitHub Pages]
-    I --> J[瀏覽器顯示快照並切換歷史報告]
+    REUSE --> H
+    H --> I[Pages 部署，失敗再試一次]
+    I -->|成功| RECEIPT[confirm：驗證內容並提交成功收據]
+    I -->|失敗| D
+    RECEIPT -->|失敗| D
+    RECEIPT -->|成功| J[瀏覽器顯示快照並切換歷史報告]
     K[main 上的指定程式或資產變更] --> L[build：以既有報告重建首頁]
     L --> H
 ```
@@ -28,13 +37,14 @@ flowchart TD
 
 | 順序／檔案 | 主要責任 | 閱讀入口 |
 | --- | --- | --- |
+| 0. `pmot/delivery.py` | 交易日與交付決策、快照重用、時間與成功收據 | `prepare()` → `main()` 的 package／confirm |
 | 1. `pmot/__main__.py` | 命令入口、交易日門檻、組合各來源、判斷是否發佈、回報 CI 結果 | `main()` → `update()` |
 | 2. `pmot/http.py` | HTTPS、逾時與重試、來源紀錄、獨立任務平行執行 | `Fetcher.text()`、`parallel()` |
 | 3. `pmot/sources.py` | 來源格式轉換與金融資料驗證 | `trading_day()`，再閱讀各 `parse_*()` |
 | 4. `pmot/render.py` | 格式化、固定規則判讀、HTML、檔案與歷史清單 | `render_report()` → `publish()` → `build_index()` |
 | 5. `site/assets/app.js` | 歷史選單、網址參數、載入狀態、章節導覽 | `start()` → 內部 `load()` |
 | 6. `.github/workflows/` | 檢查、排程、提交與部署 | `ci.yml` 與 `daily-report.yml` |
-| 7. `tests/test_market_data.py` | 使用合成資料驗證邊界條件 | 四組測試類別 |
+| 7. `tests/test_market_data.py`、`tests/test_delivery.py` | 使用合成資料驗證金融邊界、略過、重試與收據 | 各測試類別 |
 
 來源模組盡量將「下載」與「解析」分開。例如 `tx()` 準備 URL 並下載，`parse_tx()` 接收 HTML 字串與目前時間後驗證內容。測試就能直接給 HTML 範例，不受真實行情或網路影響。
 
@@ -58,6 +68,8 @@ flowchart TD
 | `site/reports/YYYY-MM-DD_HHMMSS.html` | 可單獨開啟的完整歷史報告，引用共用 CSS／JS。 |
 | `site/data/reports.json` | 所有可選報告的清單；正常發佈後按產出時間由新至舊排序。 |
 | `site/index.html` | 包含最近報告的完整首頁，即使 JavaScript 無法載入仍能閱讀內容。 |
+| `site/data/delivery.json` | 打包時的 pending 交付資料與時間，隨網站部署。 |
+| `.pmot/deployment.json` | Pages 成功後才寫回 main 的收據；前端另外讀其公開內容以確認完成時間。 |
 
 `build_index()` 直接使用清單的第一筆，並不自己重新排序。新報告發佈時，`publish()` 才負責插入與排序。這個差異也讓維護者能透過清單暫時回復舊報告。
 
@@ -72,9 +84,9 @@ flowchart TD
 
 1. **PR**：`ci.yml` 跑測試與既有首頁重建，不部署正式網站。
 2. **main 上符合 paths 的 push**：測試後執行 `build`，以既有內容重建並部署。僅修改 README／docs 不會觸發每日部署流程。
-3. **schedule／workflow_dispatch**：測試後執行 `update`；正常略過時 `changed=false`，不提交、不封裝、不部署。
+3. **schedule／workflow_dispatch**：測試後執行 `delivery prepare`；今日沒有報告才執行 `update`。今日有快照但沒有相符的成功收據則重用快照部署；休市或已成功交付時略過，不提交、不封裝、不部署。
 
-每日流程的 `build` job 具有 `contents: write`，用來保存新報告；`deploy` job 具有 `pages: write` 與 `id-token: write`，用來發佈網站。兩個 job 以 `changed` 輸出銜接。自動提交帶 `[skip ci]`，避免自己的提交再引發不必要的 push 工作流程。
+每日流程的 `build` job 具有 `contents: write`，用來保存新報告，並以 `actions: read` 取得 run 時間；`deploy` job 具有 `pages: write`、`id-token: write` 及保存成功收據所需的 `contents: write`。兩個 job 以 `changed` 輸出銜接。自動提交帶 `[skip ci]`，避免自己的提交再引發不必要的 push 工作流程。純 README／docs 的 push 不觸發這兩個工作流程，但 PR 仍執行 CI。完整路徑對照見[自動化指南](AUTOMATION.md)。
 
 ## 目前的系統邊界
 
