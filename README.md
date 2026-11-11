@@ -8,6 +8,7 @@
 
 | 你想完成的事 | 閱讀文件 |
 | --- | --- |
+| 用流程圖看懂全部自動化，以及 Actions、Python、前端與 Codex 的分工 | [自動化流程圖與分工](docs/AUTOMATION.md) |
 | 從零安裝、啟動網站、完成第一個練習 | [新手快速上手](docs/GETTING_STARTED.md) |
 | 理解程式模組、資料流與自動產物 | [架構與資料流程](docs/ARCHITECTURE.md) |
 | 看懂 JSON、單位、日期與市場訊號 | [資料規格與判讀規則](docs/DATA_GUIDE.md) |
