@@ -8,9 +8,10 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
 from unittest.mock import patch
+from urllib.parse import urlparse, parse_qs
 import json
 
-from pmot.sources import TAIPEI, NEW_YORK, number, parse_calendar, parse_date, parse_yahoo, parse_dxy, parse_treasury, parse_tx, check_notices, parse_tsm_history
+from pmot.sources import TAIPEI, NEW_YORK, number, parse_calendar, parse_date, parse_yahoo, parse_dxy, parse_treasury, parse_tx, check_notices, parse_tsm_history, trading_day, NEWS
 from pmot.render import page, render_report, publish
 
 NOW = datetime(2026, 11, 4, 8, 30, tzinfo=TAIPEI)
@@ -54,6 +55,45 @@ class CalendarTests(TestCase):
     def test_roc_dates(self):
         self.assertEqual(parse_date('1151103'), date(2026, 11, 3))
         self.assertEqual(parse_date('115/11/03'), date(2026, 11, 3))
+
+    def test_query_selects_requested_year_even_after_default_rolls_forward(self):
+        """重現年底官方預設下一年：只有 date=西元0101 能選到所需年度。"""
+        for year, month, day in [(2026, 11, 13), (2027, 1, 4)]:
+            with self.subTest(year=year):
+                seen = []
+                now = datetime(year, month, day, 8, tzinfo=TAIPEI)
+                class Fake:
+                    def json(self, url):
+                        seen.append(url)
+                        if url == NEWS:
+                            return [{'Date': now.date().isoformat(), 'Title': '一般公告'}]
+                        query = parse_qs(urlparse(url).query)
+                        # 無效選年參數會回預設下一年；測試不能只是回任何固定正確資料。
+                        selected = year if query.get('date') == [f'{year}0101'] else year + 1
+                        return {'stat': 'ok', 'date': f'{selected}0101', 'queryYear': selected,
+                                'data': [[f'{selected}-02-{d:02}', '休市', ''] for d in range(1, 11)]}
+                result = trading_day(Fake(), now)
+                self.assertTrue(result['open'])
+                self.assertEqual(parse_qs(urlparse(result['calendar_url']).query)['date'], [f'{year}0101'])
+                self.assertNotIn('queryYear', parse_qs(urlparse(seen[0]).query))
+                self.assertIn(NEWS, seen)  # 修正選年後仍須繼續查公告。
+
+    def test_calendar_metadata_year_must_match_rows_and_request(self):
+        for metadata in [{'queryYear': 2027}, {'date': '20270101'}]:
+            with self.subTest(metadata=metadata):
+                with self.assertRaises(ValueError):
+                    parse_calendar(dict(self.payload(), **metadata), NOW.date())
+        self.assertTrue(parse_calendar(dict(self.payload(), queryYear=2026, date='20260101'), NOW.date())[0])
+
+    def test_wrong_default_year_still_stops_before_notice_lookup(self):
+        seen = []
+        class Fake:
+            def json(self, url):
+                seen.append(url)
+                return {'stat': 'ok', 'data': [[f'2027-01-{d:02}', '休市', ''] for d in range(1, 11)]}
+        with self.assertRaisesRegex(ValueError, 'expected 2026.*2027'):
+            trading_day(Fake(), NOW)
+        self.assertEqual(len(seen), 1)
 
     def test_stale_notice_list_rejected(self):
         with self.assertRaises(ValueError): check_notices([{'Date':'1150101','Title':'公告'}], NOW.date(), None)
