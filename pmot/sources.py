@@ -96,8 +96,17 @@ def parse_calendar(payload, today):
         raise ValueError('Official holiday calendar unavailable')
     rows = payload['data']
     dates = [parse_date(r[0]) for r in rows]
+    years = sorted({d.year for d in dates})
     if any(d.year != today.year for d in dates) or len(dates) < 10:
-        raise ValueError('Calendar year or completeness not confirmed')
+        raise ValueError(f'Calendar year or completeness not confirmed: expected {today.year}, received row years {years}, rows={len(dates)}')
+    # 官方回應通常帶 date 與 queryYear；欄位存在時也須與要求年度一致。
+    # 不能因為只有列資料看似正確，就接受另一年度的回應標頭。
+    if payload.get('queryYear') is not None and str(payload['queryYear']) != str(today.year):
+        raise ValueError(f'Calendar queryYear mismatch: expected {today.year}, received {payload["queryYear"]}')
+    if payload.get('date') is not None:
+        calendar_date = datetime.strptime(str(payload['date']), '%Y%m%d').date()
+        if calendar_date.year != today.year:
+            raise ValueError(f'Calendar date mismatch: expected {today.year}, received {calendar_date.year}')
     if today.weekday() >= 5:
         return False, '週末'
     for row in rows:
@@ -149,7 +158,9 @@ def trading_day(fetch, now):
     只有兩關都可繼續，入口才會開始查詢市場資料。
     """
     today = now.astimezone(TAIPEI).date()
-    url = CALENDAR + '?' + urlencode({'response': 'json', 'queryYear': today.year - 1911})
+    # 用西元 date 明確指定年度。queryYear=民國年未有效選年時，服務會回預設
+    # 最新年度；年底預設切至下一年，就會讓仍在今年的交易日查核失敗。
+    url = CALENDAR + '?' + urlencode({'response': 'json', 'date': f'{today.year}0101'})
     opened, reason = parse_calendar(fetch.json(url), today)
     result = {'open': opened, 'reason': reason, 'calendar_url': url, 'notice_url': NEWS}
     if not opened:

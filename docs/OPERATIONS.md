@@ -70,6 +70,14 @@ gh run view 123456789 --repo cjw9223233/PMOT --log-failed
 | 官方公告阻擋 | 程式對最近七日的相關標題採保守處理，目前不解析公告適用日期。人工閱讀公告並記錄是否誤阻，再以程式／測試修正或等待公告退出視窗；不直接刪掉門檻。 |
 | 春節／跨年資料過舊 | 核對年度行事曆是否已發布，以及 4／5 個曆日的新鮮度門檻是否適用長假。以新案例修正規則，不把過期資料改標今天。 |
 
+### 行事曆回傳錯誤年度（2026-11-12 事件）
+
+[失敗執行紀錄](https://github.com/cjw9223233/PMOT/actions/runs/43177271259)停在 `delivery prepare` 的交易日查核，錯誤為 `Calendar year or completeness not confirmed`；測試已通過，尚未查行情或部署。原先使用 `queryYear=115`，但於 2026-11-13 重查時，該請求回傳 `queryYear: 2027` 與 2027 年資料。程式的年份檢查因此正確拒收，保留原報告。
+
+修正為用西元日期明確選年，例如 [2026 年官方行事曆 JSON](https://www.twse.com.tw/rwd/zh/holidaySchedule/holidaySchedule?response=json&date=20260101)。程式以台北當年動態產生 `date=YYYY0101`，並繼續檢查每列日期年度、至少十列，以及回應中存在的 `queryYear`、`date` 年度。不能刪除年份檢查或把錯誤年度當作今年沒有休市。
+
+若再次出現，先開啟日誌或報告中的實際 calendar URL，核對要求年、回傳年、資料列數及公告查核；錯誤訊息會列出要求年度與收到的列年度。新增測試已涵蓋官方預設下一年、跨年動態選年與回應標頭錯配。此修正不處理 GitHub 排程觸發延遲，兩者是不同問題。
+
 ## Pages 與部署排查
 
 1. **Settings → Pages → Source** 應為 **GitHub Actions**。
