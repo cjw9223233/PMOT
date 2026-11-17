@@ -46,6 +46,15 @@
       receipt.report.website_sha256 === delivery.report.website_sha256;
     panel.textContent = `本次交付（台北時間）｜啟動 ${time(delivery.workflow_started_at)}｜產出 ${time(delivery.generated_at)}｜部署準備 ${time(delivery.deployment_requested_at)}｜${confirmed ? '部署確認 ' + time(receipt.deployment_completed_at) : '部署完成時間未確認，請查看執行紀錄'}。`;
     panel.classList.toggle('historical', !confirmed);
+    if (confirmed) {
+      // 舊收據也能由實際完成時間判斷；不能把啟動或產出時間當部署時間。
+      const deadline = new Date(`${delivery.report.date}T09:00:00+08:00`);
+      const completed = new Date(receipt.deployment_completed_at);
+      const known = Number.isFinite(completed.getTime()) && Number.isFinite(deadline.getTime());
+      const late = known && completed >= deadline;
+      panel.append(known ? (late ? ' 本次部署時效：逾 09:00。' : ' 本次部署時效：09:00 前完成。') : ' 本次部署時效：未確認。');
+      panel.classList.toggle('historical', late || !known);
+    }
     if (/^https:\/\/github\.com\/cjw9223233\/PMOT\/actions\/runs\/\d+$/.test(delivery.run_url)) {
       const link = document.createElement('a');
       link.href = delivery.run_url;

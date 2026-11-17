@@ -5,9 +5,10 @@ from tempfile import TemporaryDirectory
 from unittest import TestCase
 from unittest.mock import patch
 import json
+import io
 import os
 
-from pmot.delivery import prepare, report_identity, write_json, main
+from pmot.delivery import prepare, report_identity, write_json, main, timeliness
 from pmot.sources import TAIPEI
 
 NOW = datetime(2026, 11, 11, 8, 17, tzinfo=TAIPEI)
@@ -20,6 +21,10 @@ class DeliveryTests(TestCase):
         env = patch.dict(os.environ, {'GITHUB_OUTPUT': '', 'GITHUB_STEP_SUMMARY': ''})
         env.start()
         self.addCleanup(env.stop)
+        # 測試的合成成功／逾時訊息不能成為真實 Actions annotation。
+        stdout = patch('sys.stdout', new_callable=io.StringIO)
+        stdout.start()
+        self.addCleanup(stdout.stop)
         self.root = Path(self.temp.name)
         self.site = self.root / 'site'
         self.receipt = self.root / '.pmot/deployment.json'
@@ -135,6 +140,29 @@ class DeliveryTests(TestCase):
         self.assertIn("if: steps.deployment.outcome == 'failure'", text)
         self.assertIn("steps.query.outputs.changed == 'true'", text)
         self.assertIn('cancel-in-progress: false', text)
+
+    def test_timeliness_requires_confirmed_current_day_and_completion_before_nine(self):
+        receipt = {'status': 'success', 'report': {'date': '2026-11-16'},
+                   'generated_at': '2026-11-16T08:59:00+08:00',
+                   'deployment_completed_at': '2026-11-16T00:59:59+00:00'}
+        self.assertEqual(timeliness(receipt, '2026-11-16')['status'], 'on_time')
+        receipt['deployment_completed_at'] = '2026-11-16T09:00:00+08:00'
+        self.assertEqual(timeliness(receipt, '2026-11-16')['status'], 'late')
+        receipt['deployment_completed_at'] = '2026-11-16T11:21:06+08:00'
+        result = timeliness(receipt, '2026-11-16')
+        self.assertEqual(result['status'], 'late')
+        self.assertEqual(result['late_seconds'], 8466)
+        self.assertEqual(timeliness(receipt, '2026-11-17')['status'], 'unconfirmed')
+        receipt['status'] = 'pending'
+        self.assertEqual(timeliness(receipt, '2026-11-16')['status'], 'unconfirmed')
+
+    def test_timeliness_does_not_infer_success_from_generation_alone(self):
+        receipt = {'status': 'success', 'report': {'date': '2026-11-16'},
+                   'generated_at': '2026-11-16T08:00:00+08:00'}
+        for value in [None, 'invalid', '2026-11-16T08:05:00', '2026-11-16T07:59:00+08:00']:
+            with self.subTest(value=value):
+                receipt['deployment_completed_at'] = value
+                self.assertEqual(timeliness(receipt, '2026-11-16')['status'], 'unconfirmed')
 
     def test_backup_delay_uses_its_own_slot_and_records_decision(self):
         timing = self.root / 'timing.json'

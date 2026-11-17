@@ -68,6 +68,37 @@ def clock():
     return datetime.now(TAIPEI).isoformat(timespec='seconds')
 
 
+def timeliness(receipt, day):
+    """交付成功與準時是兩件事；不能以 run 綠燈或報告產出時間取代部署確認。"""
+    deadline = datetime.fromisoformat(day + 'T09:00:00+08:00')
+    result = {'deadline_at': deadline.isoformat(), 'status': 'unconfirmed'}
+    if receipt.get('status') != 'success' or receipt.get('report', {}).get('date') != day:
+        return result
+    try:
+        completed = datetime.fromisoformat(receipt['deployment_completed_at'])
+        generated = datetime.fromisoformat(receipt['generated_at'])
+        if completed.tzinfo is None or generated.tzinfo is None:
+            return result
+        completed, generated = completed.astimezone(TAIPEI), generated.astimezone(TAIPEI)
+        if generated.date().isoformat() != day or completed < generated:
+            return result
+    except (KeyError, ValueError, TypeError):
+        return result
+    result.update(status='on_time' if completed < deadline else 'late',
+                  deployment_completed_at=completed.isoformat(),
+                  late_seconds=max(0, int((completed - deadline).total_seconds())))
+    return result
+
+
+def report_timeliness(receipt, day):
+    result = timeliness(receipt, day)
+    summary('### 開盤前交付時效\n\n' + json.dumps(result, ensure_ascii=False, indent=2))
+    if result['status'] != 'on_time':
+        # 不把已成功部署改寫成未部署；以獨立欄位及 Actions warning 揭露 SLA 未達。
+        print('::warning title=Premarket delivery deadline::09:00 delivery ' + result['status'])
+    return result
+
+
 def output(name, value):
     if path := os.environ.get('GITHUB_OUTPUT'):
         with open(path, 'a', encoding='utf-8') as stream:
@@ -117,6 +148,8 @@ def main():
         write_json(args.timing, timing)
         output('action', action)
         summary('### 交付決策：' + action + '\n\n' + reason + '\n\n```json\n' + json.dumps(timing, ensure_ascii=False, indent=2) + '\n```')
+        if action == 'skip' and reason == '當日報告已成功部署':
+            report_timeliness(read_json(args.receipt, {}), now.date().isoformat())
     elif args.command == 'package':
         entry = read_json(args.site / 'data/reports.json')[0]
         timing = read_json(args.timing)
@@ -136,6 +169,7 @@ def main():
         if report_identity(args.site, entry) != timing['report']:
             raise ValueError('Report changed since packaging; refusing success receipt')
         timing.update(status='success', deployment_completed_at=clock())
+        timing['timeliness'] = report_timeliness(timing, timing['report']['date'])
         write_json(args.receipt, timing)
         summary('### 部署成功\n\n確認時間：' + timing['deployment_completed_at'] + '\n\n' + timing['run_url'])
 

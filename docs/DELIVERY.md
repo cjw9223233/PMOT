@@ -39,10 +39,15 @@ Pages action 一次最多等待兩分鐘，第一次失敗後於同一 run 再�
 | `generated_at` | 原快照實際產出時間；重試沿用原值 |
 | `deployment_requested_at` | 打包部署準備時間，並非 Pages API 精確受理時間 |
 | `deployment_completed_at` | Pages action 成功後寫收據的確認時間，略晚於 Pages 回報成功時間 |
+| `timeliness` | 新收據另列 09:00 截止與 `on_time`／`late`／`unconfirmed`；成功部署不等於準時 |
 
 Actions Summary 與保留 30 天的 timing artifact 提供該次決策及已知時間（交易日查核失敗、尚未寫 timing 時可能沒有 artifact）。網站 `site/data/delivery.json` 是打包當下的 pending 紀錄，不能預填部署成功。瀏覽器另外讀取 main 上公開成功收據，核對 run、attempt、內容後顯示確認時間；連線失敗或快取未更新時標示「未確認」，可點 Actions 紀錄查證。頁面仍可正常閱讀，不依賴成功收據連線才能顯示行情。
 
 本機不產生假的成功部署收據。`delivery confirm` 只由工作流程在 Pages action 成功後呼叫；收據是本專案的狀態紀錄，並不是遠端網站的獨立可用性探測。Pages 成功也不能代表所有地區 CDN 已同步。
+
+時效以台北報告日 **09:00 前**的實際部署確認為準，09:00:00 已算逾時。成功部署後、或補跑因已交付而略過時，Actions Summary 都會另外列時效，逾時／未確認會產生 warning，部署狀態仍保留真實成功結果。網站也依相符收據的完成時間標示「09:00 前完成」或「逾 09:00」；舊收據不需補造時間。尚未喚醒的 workflow 無法自行在 09:00 發出警示，這不是獨立即時監測。
+
+[2026-11-17 稽核](audits/2026-11-17-schedules.md)確認三個時槽仍會共同延遲數小時。使用者選擇先保留 GitHub 排程；本次僅修正狀態揭露，不宣稱已解決排程準時問題，也未建立外部觸發或常駐 AI 監控。
 
 ## 驗收
 
