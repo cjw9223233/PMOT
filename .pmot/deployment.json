@@ -1,31 +1,31 @@
 {
   "event": "schedule",
   "schedule": "0 8 * * *",
-  "target_at": "2026-11-18T08:00:00+08:00",
-  "workflow_started_at": "2026-11-18T04:48:48Z",
-  "run_created_at": "2026-11-18T04:48:48Z",
-  "prepared_at": "2026-11-18T12:48:54+08:00",
+  "target_at": "2026-11-19T08:00:00+08:00",
+  "workflow_started_at": "2026-11-19T04:39:08Z",
+  "run_created_at": "2026-11-19T04:39:08Z",
+  "prepared_at": "2026-11-19T12:39:21+08:00",
   "decision": "generate",
-  "run_url": "https://github.com/cjw9223233/PMOT/actions/runs/44239896720",
-  "run_id": "44239896720",
+  "run_url": "https://github.com/cjw9223233/PMOT/actions/runs/44459782304",
+  "run_id": "44459782304",
   "run_attempt": "1",
-  "trigger_expected_at": "2026-11-18T08:00:00+08:00",
-  "trigger_delay_seconds": 17328,
+  "trigger_expected_at": "2026-11-19T08:00:00+08:00",
+  "trigger_delay_seconds": 16748,
   "reason": "今日尚無報告",
   "report": {
-    "date": "2026-11-18",
-    "content": "data/2026-11-18_124901.html",
-    "sha256": "c444ac61b6a411c3e28c4cb59f26d52023b5e6ec2bec76c8ee75d16fe685129e",
-    "website_sha256": "e22e94636cfba7056ee31df7393293e76b2a0be86d8118776d781a095303bd07"
+    "date": "2026-11-19",
+    "content": "data/2026-11-19_123927.html",
+    "sha256": "ae95b5adf4791c838ef98b1be6aa694b2c9b16583a2be2a79be2a5d2a1a9edc3",
+    "website_sha256": "8bbfdd48374130ade426edc37e50ee8b5288c885f14ccb5dfd79867cac6ea98d"
   },
-  "generated_at": "2026-11-18T12:49:01+08:00",
-  "deployment_requested_at": "2026-11-18T12:49:01+08:00",
+  "generated_at": "2026-11-19T12:39:27+08:00",
+  "deployment_requested_at": "2026-11-19T12:39:27+08:00",
   "status": "success",
-  "deployment_completed_at": "2026-11-18T12:49:31+08:00",
+  "deployment_completed_at": "2026-11-19T12:39:46+08:00",
   "timeliness": {
-    "deadline_at": "2026-11-18T09:00:00+08:00",
+    "deadline_at": "2026-11-19T09:00:00+08:00",
     "status": "late",
-    "deployment_completed_at": "2026-11-18T12:49:31+08:00",
-    "late_seconds": 13771
+    "deployment_completed_at": "2026-11-19T12:39:46+08:00",
+    "late_seconds": 13186
   }
 }
