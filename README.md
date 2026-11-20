@@ -35,6 +35,8 @@
 
 本專案的 Worker 已於 **2026-11-20 啟用 Cron**：[基本健康端點](https://pmot-independent-trigger.cjw-9223233.workers.dev/health)。GitHub 讀取、收據與公開網站核對已實測；首次真實 Cron 喚醒及後續五個交易日的時效尚待驗收，詳見[上線紀錄](docs/audits/2026-11-20-cloudflare-activation.md)。
 
+[11/20 初次驗收](docs/audits/2026-11-20-cloudflare-acceptance.md)已核對實際 Cron 歷史與 GitHub 清單：尚未到首個排程時槽，不能據此宣稱自動喚醒、休市或準時率通過。
+
 程式使用 Python 3.12 標準函式庫；Windows 若缺 IANA 時區資料，需要在虛擬環境安裝 `tzdata`，步驟見快速上手。行情來源可能限流；每一項各自失敗時列「資料未確認」。全部市場來源失敗、交易日無法確認或近期有需人工判讀的休市公告時，會在產出新報告前停止。官方新聞清單的異動檢查採保守門檻，可能需要人工確認；不得把未確認狀態當作正常開市。檔案寫入中斷的限制與恢復方式見維運手冊。
 
 GitHub 排程可能延遲，**08:00 是觸發時間，不是保證完成時間**。報告以實際完成與資料截止時間為準；逾 09:00 時自動標示。公開儲存庫的排程可能因長期無活動而停用，需於 Actions 檢查狀態。[GitHub 排程說明](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
