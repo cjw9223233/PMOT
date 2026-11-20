@@ -4,6 +4,8 @@
 
 Cloudflare Worker 負責喚醒及查核，行情、交易日判斷、HTML 與 Pages 部署仍由 GitHub Actions／Python 執行。GitHub 原有 08:00、08:17、08:37 備援全部保留；沒有遷移網站、啟用付費方案或常駐本機程式。**檔案合併不等於 Worker 已上線**，須完成登入、設定 Secret、部署及下列驗收。
 
+原專案已於 2026-11-20 完成部署與 Cron 啟用，實測與待驗收項目見[上線紀錄](audits/2026-11-20-cloudflare-activation.md)。以下步驟供重建、更新或其他帳號使用；不必重設已存在的金鑰。
+
 ## 1. 先看流程
 
 ```mermaid
