@@ -6,6 +6,8 @@ Cloudflare Worker 負責喚醒及查核，行情、交易日判斷、HTML 與 Pa
 
 原專案已於 2026-11-20 完成部署與 Cron 啟用，實測與待驗收項目見[上線紀錄](audits/2026-11-20-cloudflare-activation.md)。以下步驟供重建、更新或其他帳號使用；不必重設已存在的金鑰。
 
+最新查核快照：[2026-11-20 初次驗收](audits/2026-11-20-cloudflare-acceptance.md)。記錄「尚未到首個時槽」與真正的漏跑不同，查核時應先算啟用後應到期的時槽數。
+
 ## 1. 先看流程
 
 ```mermaid
