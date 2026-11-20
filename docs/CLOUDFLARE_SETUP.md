@@ -59,7 +59,7 @@ Actions write 用於喚醒及讀 run；Contents read 用於讀取查核紀錄、
 若瀏覽器出現 `Could not reach .../oauth2/token`，本機 Node 可能無法完成 HTTPS 憑證／代理連線。API Token 可以避開 OAuth，但如果同一台電腦連 Cloudflare API 也失敗，僅改 token 並不能解決網路問題。此時直接讓 GitHub runner 部署，不必反覆在本機登入，也不要關閉 TLS 驗證。
 
 1. 用瀏覽器登入 Cloudflare Dashboard，進入帳號 API Tokens（或 My Profile → API Tokens），使用 **Edit Cloudflare Workers** 範本，僅選本次使用的 account；保留範本部署 Workers／Cron 所需權限。建立的是 Cloudflare 部署 token，與前一節 GitHub token 不同。
-2. 從帳號頁面取得 **Account ID**，不要填 Zone ID。
+2. 從帳號頁面取得 **Account ID**，不要填 Zone ID。首次使用時，先在 Workers & Pages 開通免費 Workers 並確認 workers.dev 子網域已設定；不要選擇升級付費。
 3. GitHub 儲存庫 → Settings → Secrets and variables → Actions，新增下表。金鑰直接填入 GitHub 表單，不貼聊天、不存進程式。
 
 | 類型 | 名稱 | 填什麼 |
