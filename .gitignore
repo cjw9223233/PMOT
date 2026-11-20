@@ -11,3 +11,6 @@ scripts/build_20261104_report.py
 Thumbs.db
 *.log
 /tmp/
+node_modules/
+.wrangler/
+.dev.vars*

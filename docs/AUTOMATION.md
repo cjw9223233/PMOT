@@ -4,6 +4,8 @@
 
 PMOT 每天由 GitHub Actions 啟動，呼叫 Python 查資料、產生報告並部署到 GitHub Pages。訪客開網站時，前端只讀已產生的檔案。Codex（這個對話中的 AI 助手）依使用者交辦協助開發與查核；每日流程沒有呼叫 Codex 或其他 AI 模型。
 
+新增的 [Cloudflare Worker](CLOUDFLARE_SETUP.md)可在完成帳號／Secret／部署後獨立喚醒同一 Actions，並查核交付；原 GitHub 排程保留。以下圖仍描述 Actions 內部流程，Worker 相當於另一個帶來源標籤的手動 API 入口，不移走 Python 或 Pages。
+
 第一次閱讀建議先看第 1、2 張圖，再依問題看後面的細節。圖中方框表示步驟，菱形表示條件，箭頭上的文字表示走哪個分支；「略過」是正常結束，「失敗」需要查看紀錄。
 
 | 新手會遇到的詞 | 在 PMOT 的意思 |

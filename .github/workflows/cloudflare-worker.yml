@@ -1,0 +1,51 @@
+name: Deploy independent Cloudflare trigger
+
+# 只供人工設定／更新 Worker。原報告與 Pages 流程、備援排程完全保留。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pmot-cloudflare-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      WRANGLER_SEND_METRICS: 'false'
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      PMOT_DISPATCH_TOKEN: ${{ secrets.PMOT_DISPATCH_TOKEN }}
+      PMOT_CHECK_TOKEN: ${{ secrets.PMOT_CHECK_TOKEN }}
+    defaults:
+      run:
+        working-directory: cloudflare
+    steps:
+      - uses: actions/checkout@v6
+      - name: Verify setup without revealing credentials
+        run: |
+          for key in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID PMOT_DISPATCH_TOKEN PMOT_CHECK_TOKEN; do
+            if [ -z "${!key}" ]; then echo "::error::Missing configuration: $key"; exit 1; fi
+          done
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - run: npm ci
+      - run: npm test
+      - run: npm run dry-run
+      - name: Deploy Worker code and cron configuration
+        run: npm run deploy
+      - name: Set runtime secrets through stdin only
+        # 不寫金鑰檔、不使用寬權限或短效的內建 github.token 作為每日憑證。
+        run: |
+          node --input-type=module -e 'process.stdout.write(JSON.stringify({GITHUB_TOKEN:process.env.PMOT_DISPATCH_TOKEN,CHECK_TOKEN:process.env.PMOT_CHECK_TOKEN}))' | npx wrangler secret bulk
+      - name: Verify secret names only
+        run: npx wrangler secret list
+      - name: Write deployment follow-up
+        run: |
+          echo '### Cloudflare Worker deployed' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Read the workers.dev URL in the deployment step, then verify protected /check and the next actual Cron invocation. API deployment success alone is not daily delivery proof.' >> "$GITHUB_STEP_SUMMARY"

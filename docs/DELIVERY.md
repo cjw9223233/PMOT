@@ -2,6 +2,8 @@
 
 [回 README](../README.md) · [先看自動化流程圖與分工](AUTOMATION.md)
 
+外部喚醒實作與設定見 [Cloudflare 免費方案](CLOUDFLARE_SETUP.md)。Actions 另保存 `.pmot/check.json` 讓 Worker 辨識當日官方查核的開市／休市／未知；此檔不含行情，也不會因休市而部署網站。`trigger_source` 與 `external_requested_at` 僅供追蹤，不繞過原判斷。
+
 每天台北時間 08:00 主排程，08:17、08:37 補跑，均由同一 GitHub Actions 流程執行。每次均重新查核官方交易日；休市略過，查核不明則失敗並保留原網站。GitHub 排程仍可能共同延遲，不保證 09:00 前完成；需要硬性時效時須另設獨立觸發及監測。
 
 ## 新手閱讀順序

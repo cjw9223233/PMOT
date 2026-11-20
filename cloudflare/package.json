@@ -1,0 +1,15 @@
+{
+  "name": "pmot-independent-trigger",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "dev": "wrangler dev --test-scheduled",
+    "deploy": "wrangler deploy",
+    "dry-run": "wrangler deploy --dry-run",
+    "whoami": "wrangler whoami",
+    "tail": "wrangler tail --format pretty"
+  },
+  "engines": { "node": ">=22" },
+  "devDependencies": { "wrangler": "^4.0.0" }
+}
