@@ -186,3 +186,24 @@ class DeliveryTests(TestCase):
         record = json.loads(timing.read_text(encoding='utf-8'))
         self.assertEqual(record['decision'], 'failed')
         self.assertIn('prepared_at', record)
+
+    def test_gate_evidence_is_structured_and_never_guessed(self):
+        info = {}
+        prepare(self.site, self.receipt, NOW, 'schedule', object(), gate_info=info)
+        self.assertIs(info['open'], True)
+        with patch('pmot.delivery.trading_day', return_value={'open': False, 'reason': 'official closed'}):
+            info = {}
+            self.assertEqual(prepare(self.site, self.receipt, NOW, 'schedule', object(), gate_info=info)[0], 'skip')
+            self.assertIs(info['open'], False)
+
+    def test_checkpoint_saves_closed_but_push_does_not_overwrite_it(self):
+        timing = self.root / 'timing.json'
+        check = self.root / 'check.json'
+        args = ['delivery', 'checkpoint', '--timing', str(timing), '--check', str(check)]
+        closed = {'date': '2026-11-11', 'event': 'workflow_dispatch', 'market_state': 'closed', 'decision': 'skip'}
+        write_json(timing, closed)
+        with patch('sys.argv', args): main()
+        self.assertEqual(json.loads(check.read_text(encoding='utf-8')), closed)
+        write_json(timing, {'event': 'push', 'market_state': 'not_checked'})
+        with patch('sys.argv', args): main()
+        self.assertEqual(json.loads(check.read_text(encoding='utf-8')), closed)

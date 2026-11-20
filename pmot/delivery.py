@@ -39,10 +39,12 @@ def report_identity(site, entry):
             'website_sha256': website.hexdigest()}
 
 
-def prepare(site, receipt_path, now, event, fetch=None):
+def prepare(site, receipt_path, now, event, fetch=None, gate_info=None):
     """push 一律重建；每日／手動先查交易日，再判斷新建、重試或略過。"""
     if event != 'push':
         gate = trading_day(fetch or Fetcher(now), now)
+        if gate_info is not None:
+            gate_info.update(gate)
         if not gate['open']:
             return 'skip', gate['reason']
     entries = read_json(site / 'data/reports.json', [])
@@ -114,10 +116,11 @@ def summary(value):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('command', choices=['prepare', 'package', 'confirm'])
+    parser.add_argument('command', choices=['prepare', 'package', 'confirm', 'checkpoint'])
     parser.add_argument('--site', type=Path, default=ROOT / 'site')
     parser.add_argument('--receipt', type=Path, default=ROOT / '.pmot/deployment.json')
     parser.add_argument('--timing', type=Path, default=ROOT / 'delivery-timing.json')
+    parser.add_argument('--check', type=Path, default=ROOT / '.pmot/check.json')
     args = parser.parse_args()
     if args.command == 'prepare':
         now = datetime.now(TAIPEI)
@@ -127,6 +130,9 @@ def main():
                   'schedule': os.environ.get('TRIGGER_SCHEDULE', ''),
                   'target_at': scheduled.isoformat(), 'workflow_started_at': os.environ.get('RUN_STARTED_AT') or started,
                   'run_created_at': os.environ.get('RUN_CREATED_AT') or None,
+                  'date': now.date().isoformat(), 'market_state': 'unknown',
+                  'trigger_source': os.environ.get('TRIGGER_SOURCE') or os.environ.get('GITHUB_EVENT_NAME', 'local'),
+                  'external_requested_at': os.environ.get('EXTERNAL_REQUESTED_AT') or None,
                   'prepared_at': started, 'decision': 'checking',
                   'run_url': os.environ.get('RUN_URL', ''), 'run_id': os.environ.get('GITHUB_RUN_ID', ''),
                   'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT', '1')}
@@ -137,19 +143,28 @@ def main():
             timing['trigger_expected_at'] = slot.isoformat()
             timing['trigger_delay_seconds'] = max(0, int((datetime.fromisoformat(timing['run_created_at'].replace('Z', '+00:00')) - slot).total_seconds()))
         write_json(args.timing, timing)
+        gate_info = {}
         try:
-            action, reason = prepare(args.site, args.receipt, now, os.environ.get('GITHUB_EVENT_NAME', 'workflow_dispatch'))
+            action, reason = prepare(args.site, args.receipt, now, os.environ.get('GITHUB_EVENT_NAME', 'workflow_dispatch'), gate_info=gate_info)
         except Exception as exc:
             timing.update(decision='failed', reason=str(exc))
             write_json(args.timing, timing)
             summary('交付查核失敗：' + str(exc))
             raise
-        timing.update(decision=action, reason=reason)
+        state = 'open' if gate_info.get('open') is True else 'closed' if gate_info.get('open') is False else 'not_checked'
+        timing.update(decision=action, reason=reason, market_state=state)
         write_json(args.timing, timing)
         output('action', action)
         summary('### 交付決策：' + action + '\n\n' + reason + '\n\n```json\n' + json.dumps(timing, ensure_ascii=False, indent=2) + '\n```')
         if action == 'skip' and reason == '當日報告已成功部署':
             report_timeliness(read_json(args.receipt, {}), now.date().isoformat())
+    elif args.command == 'checkpoint':
+        timing = read_json(args.timing)
+        if not timing:
+            raise ValueError('No check evidence to save')
+        # 程式改版 push 不查交易日，不能蓋掉當日官方休市／開市查核證據。
+        if timing.get('event') != 'push':
+            write_json(args.check, timing)
     elif args.command == 'package':
         entry = read_json(args.site / 'data/reports.json')[0]
         timing = read_json(args.timing)

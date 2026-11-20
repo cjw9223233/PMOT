@@ -10,6 +10,16 @@ on:
     - cron: '37 8 * * *'
       timezone: Asia/Taipei
   workflow_dispatch:
+    inputs:
+      trigger_source:
+        description: 'Who requested this run (label only; does not bypass checks)'
+        type: choice
+        options: [manual, cloudflare]
+        default: manual
+      requested_at:
+        description: 'External trigger actual UTC request timestamp, if applicable'
+        type: string
+        required: false
   push:
     branches: [main]
     paths:
@@ -57,7 +67,21 @@ jobs:
         env:
           TRIGGER_SCHEDULE: ${{ github.event.schedule }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TRIGGER_SOURCE: ${{ inputs.trigger_source }}
+          EXTERNAL_REQUESTED_AT: ${{ inputs.requested_at }}
         run: python -m pmot.delivery prepare
+      - name: Save official trading day check for independent monitor
+        if: always() && steps.prepare.outcome != 'skipped'
+        shell: bash
+        run: |
+          python -m pmot.delivery checkpoint
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if [ -f .pmot/check.json ]; then git add .pmot/check.json; fi
+          if ! git diff --cached --quiet; then
+            git commit -m 'Record trading day check [skip ci]'
+            git push origin HEAD:main
+          fi
       - name: Query fresh markets only when no report exists today
         id: query
         if: steps.prepare.outputs.action == 'generate'

@@ -14,6 +14,8 @@
 
 本專案沒有資料庫伺服器、npm 安裝或 LLM 金鑰設定。每日正式更新由 GitHub Actions 執行。本機練習先使用儲存庫內的歷史資料。
 
+上句指 Python 報告與網站閱讀練習；新增的 Cloudflare 外部觸發是另一個可選工具，需 Node／npm、Cloudflare 登入與專用 Secret，見 [Cloudflare 設定](CLOUDFLARE_SETUP.md)。
+
 想先知道「每天誰在做什麼」，可先讀[自動化流程圖與分工](AUTOMATION.md)的前兩張圖，再回來操作。每日流程由 Actions 呼叫 Python 執行，Codex 不參與每日報告產生。
 
 ## 2. 備妥工具（5 分鐘）

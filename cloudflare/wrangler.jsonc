@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pmot-independent-trigger",
+  "main": "src/worker.mjs",
+  "compatibility_date": "2026-11-20",
+  "workers_dev": true,
+  // UTC 00:00/10/30/45/55 = 台北 08:00/10/30/45/55；原 GitHub 三時槽保留。
+  "triggers": { "crons": ["0,10,30,45,55 0 * * *"] },
+  "observability": { "enabled": true },
+  "vars": {
+    "GITHUB_OWNER": "cjw9223233",
+    "GITHUB_REPO": "PMOT",
+    "GITHUB_WORKFLOW": "daily-report.yml",
+    "GITHUB_REF": "main",
+    "SITE_URL": "https://cjw9223233.github.io/PMOT"
+  }
+  // GITHUB_TOKEN 與 CHECK_TOKEN 只用 wrangler secret put 設定，不寫在此檔。
+}
