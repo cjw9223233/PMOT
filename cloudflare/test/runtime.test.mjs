@@ -65,3 +65,27 @@ test('workerd verifies receipt and public Pages version without forwarding GitHu
   assert.equal(result.status, 200);
   assert.equal((await result.json()).state, 'delivered');
 });
+
+test('static site and history coexist with health and protected check routes', async t => {
+  const mf = new Miniflare(convertV4MiniflareOptions({
+    name: 'website', modules: true,
+    scriptPath: fileURLToPath(new URL('../src/worker.mjs', import.meta.url)),
+    compatibilityDate: '2026-11-20',
+    assets: {directory: fileURLToPath(new URL('../../site', import.meta.url)), binding: 'ASSETS', run_worker_first: ['/health', '/check']}
+  }));
+  t.after(() => mf.dispose());
+  const app = await mf.getWorker('website');
+  const root = await app.fetch('https://worker.example/');
+  assert.equal(root.status, 200);
+  assert.match(await root.text(), /report-picker/);
+  const manifest = await app.fetch('https://worker.example/data/reports.json');
+  assert.equal(manifest.status, 200);
+  assert.match(manifest.headers.get('Cache-Control'), /no-store/);
+  const entries = await manifest.json();
+  const fragment = await app.fetch('https://worker.example/' + entries[0].content);
+  assert.ok([200, 307, 308].includes(fragment.status));
+  assert.equal((await app.fetch('https://worker.example/assets/app.js')).status, 200);
+  assert.equal((await app.fetch('https://worker.example/health')).status, 200);
+  assert.equal((await app.fetch('https://worker.example/check', {method: 'POST'})).status, 401);
+  assert.equal((await app.fetch('https://worker.example/unknown-path')).status, 404);
+});

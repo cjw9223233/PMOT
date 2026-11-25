@@ -58,28 +58,26 @@ Actions write 用於喚醒及讀 run；Contents read 用於讀取查核紀錄、
 
 不要使用本機 `gh` 的廣泛 OAuth token，也不要把金鑰貼進聊天、README、`wrangler.jsonc` 或 git。下面的互動提示會讓你直接輸入 Secret。
 
-## 4. 本機 OAuth 失敗時：改由 GitHub Actions 部署（建議替代路徑）
+## 4. 每日雙站部署：設定 GitHub Actions 金鑰
 
-若瀏覽器出現 `Could not reach .../oauth2/token`，本機 Node 可能無法完成 HTTPS 憑證／代理連線。API Token 可以避開 OAuth，但如果同一台電腦連 Cloudflare API 也失敗，僅改 token 並不能解決網路問題。此時直接讓 GitHub runner 部署，不必反覆在本機登入，也不要關閉 TLS 驗證。
+報告現在由同一個每日 workflow 發布到 Cloudflare Worker 靜態網站與 GitHub Pages。只在兩站公開內容驗證通過後寫成功收據。設定一次後，每日不需要本機登入。
 
-1. 用瀏覽器登入 Cloudflare Dashboard，進入帳號 API Tokens（或 My Profile → API Tokens），使用 **Edit Cloudflare Workers** 範本，僅選本次使用的 account；保留範本部署 Workers／Cron 所需權限。建立的是 Cloudflare 部署 token，與前一節 GitHub token 不同。
-2. 從帳號頁面取得 **Account ID**，不要填 Zone ID。首次使用時，先在 Workers & Pages 開通免費 Workers 並確認 workers.dev 子網域已設定；不要選擇升級付費。
-3. GitHub 儲存庫 → Settings → Secrets and variables → Actions，新增下表。金鑰直接填入 GitHub 表單，不貼聊天、不存進程式。
+1. 開啟 [Cloudflare 個人 API Tokens](https://dash.cloudflare.com/profile/api-tokens) → Create Token。
+2. 在 API token templates 找 **Edit Cloudflare Workers** → Use template。找不到時可 Create Custom Token，設定 `Account → Workers Scripts → Edit`、`Account → Account Settings → Read`。
+3. Token 名稱可填 `PMOT GitHub Deploy`。Account Resources 選 `Include → Specific account`，僅選 PMOT 所在帳號；Client IP Filtering 留空，避免 GitHub runner IP 變動被擋。記錄金鑰到期日。
+4. Continue to summary → Create Token，將值直接複製到 [PMOT Actions Secrets](https://github.com/cjw9223233/PMOT/settings/secrets/actions) → New repository secret，名稱為 `CLOUDFLARE_API_TOKEN`。
+5. Repository variables 應有 `CLOUDFLARE_ACCOUNT_ID`，填 Cloudflare Account ID，不是 Zone ID；原專案已設定。
 
-| 類型 | 名稱 | 填什麼 |
+| 存放位置 | 名稱 | 用途 |
 | --- | --- | --- |
-| Repository secret | `CLOUDFLARE_API_TOKEN` | Cloudflare 的 Workers 部署 token |
-| Repository secret | `PMOT_DISPATCH_TOKEN` | 第 3 節限定 PMOT 的 GitHub fine-grained token |
-| Repository secret | `PMOT_CHECK_TOKEN` | 自選長且隨機的查核密碼 |
-| Repository variable | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare Account ID（非密碼） |
+| GitHub Repository secret | `CLOUDFLARE_API_TOKEN` | 發布 Worker 程式及靜態資產的 Cloudflare token |
+| GitHub Repository variable | `CLOUDFLARE_ACCOUNT_ID` | 發布到哪個 Cloudflare account |
+| Cloudflare Worker Secret | `GITHUB_TOKEN` | Worker 日常喚醒、讀 GitHub 紀錄；保留原值 |
+| Cloudflare Worker Secret | `CHECK_TOKEN` | 保護 `/check`；保留原值 |
 
-4. 在 Actions 選 **Deploy independent Cloudflare trigger** → Run workflow → main。
-5. 流程先測試與 dry-run，再部署程式與排程、透過標準輸入設定 Worker 的 `GITHUB_TOKEN`／`CHECK_TOKEN`，並僅列出 Secret 名稱。所有值由 GitHub Secrets 遮罩保管，不會寫金鑰檔。
-6. 部署步驟會顯示 workers.dev 網址。完成後照第 6、7 節查核。新建 Worker 與 Secret 設定之間可能短暫尚未具備憑證，不能在整個流程成功之前視為完成；若設定 Secret 失敗，修正後重跑同一 workflow。
+兩組用途不同：不要把 GitHub token 當作 Cloudflare 部署 token。每日發布會保留既有 Worker runtime Secrets，不會要求把它們另複製至 GitHub，也不會重新產生查核密碼。
 
-需要 CLI 時，也可在本機使用 `gh secret set CLOUDFLARE_API_TOKEN`、`gh secret set PMOT_DISPATCH_TOKEN`、`gh secret set PMOT_CHECK_TOKEN` 的互動提示直接輸入；Account ID 用 `gh variable set CLOUDFLARE_ACCOUNT_ID` 設定。不要把值放進含明碼的命令列、版本庫或聊天。
-
-這個 workflow **只接受人工觸發**，不會因 PR 或每次 main 更新自動修改 Cloudflare。日後修改 Worker，合併後再人工執行一次。若 GitHub runner 也無法連線，保留錯誤紀錄，不聲稱已部署；原報告排程仍照常保留。
+需要人工重建時，在 Actions 執行 `Deploy independent Cloudflare trigger`。它現在只送出 `rebuild_only=true` 的每日發布請求，**請繼續追蹤 Daily market report and GitHub Pages 的結果**；請求受理不等於網站部署成功。人工重建不查新行情，仍用既有快照。原 GitHub 三時槽保留。
 
 ## 5. 本機網路正常時：登入並設定 Secret（替代方式）
 
@@ -98,7 +96,7 @@ npx wrangler secret put CHECK_TOKEN
 
 只有 Secret 值需要保密；Worker 程式、帳號名稱及排程可公開。若帳號有多個 Cloudflare account，先核對 `whoami`，必要時於本機環境設定正確的 `CLOUDFLARE_ACCOUNT_ID`。不要隨意啟用付費 Workers。
 
-## 5A. 本機部署與共用排程說明
+## 5A. 靜態網站與共用排程說明
 
 先確認 GitHub main 已有本次 `workflow_dispatch` inputs 及 checkpoint 步驟，再執行：
 
@@ -106,7 +104,7 @@ npx wrangler secret put CHECK_TOKEN
 npm run deploy
 ```
 
-部署完成會顯示 `https://pmot-independent-trigger.<你的子網域>.workers.dev`。原 PMOT 網站網址保持不變。
+部署完成會顯示 `https://pmot-independent-trigger.<你的子網域>.workers.dev`。原專案首頁為 [Cloudflare 報告網站](https://pmot-independent-trigger.cjw-9223233.workers.dev/)，GitHub Pages 仍保留；詳細模式與雙站發布見 [最新報告網站](LATEST_SITE.md)。本機直接 deploy 僅適合除錯，正式更新請用每日雙站流程，否則不會產生兩站驗證收據。
 
 | 台北時間 | UTC | 行為 |
 | --- | --- | --- |

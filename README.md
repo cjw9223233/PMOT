@@ -11,6 +11,7 @@
 | 用流程圖看懂全部自動化，以及 Actions、Python、前端與 Codex 的分工 | [自動化流程圖與分工](docs/AUTOMATION.md) |
 | 從零安裝、啟動網站、完成第一個練習 | [新手快速上手](docs/GETTING_STARTED.md) |
 | 設定 Cloudflare 免費獨立觸發、金鑰、交付查核與驗收 | [Cloudflare 新手設定](docs/CLOUDFLARE_SETUP.md) |
+| 理解首頁最新模式、保留歷史選擇與每日雙站部署 | [最新報告網站](docs/LATEST_SITE.md) |
 | 理解程式模組、資料流與自動產物 | [架構與資料流程](docs/ARCHITECTURE.md) |
 | 看懂 JSON、單位、日期與市場訊號 | [資料規格與判讀規則](docs/DATA_GUIDE.md) |
 | 查詢今天為何沒更新、手動執行或回復舊報告 | [維運與故障排除](docs/OPERATIONS.md) |

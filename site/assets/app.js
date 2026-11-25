@@ -11,6 +11,14 @@
   let requestVersion = 0;
   let delivery;
   let receipt;
+  let entries = [];
+  let currentEntry = null;
+  let refreshing = null;
+  let deliveryVersion = 0;
+  const requested = new URL(location.href).searchParams.get('report');
+  let mode = requested ? 'history' : 'latest';
+  let historyPath = requested;
+  let latestButton = document.querySelector('#latest-report');
   document.querySelector('#print-report').addEventListener('click', () => window.print());
 
   function bindNavigation() {
@@ -31,7 +39,7 @@
     // 訪客可能在其他時區；「今日報告」仍以台北日期判定，不改報告的原始日期。
     const today = new Intl.DateTimeFormat('sv-SE', {timeZone: 'Asia/Taipei'}).format(new Date());
     const old = entry.date !== today;
-    status.textContent = `${old ? '目前顯示歷史報告' : '目前顯示今日報告'}：${entry.date}｜產出 ${entry.generated_at.replace('T', ' ')}。${entry.status === 'partial' ? '部分資料未確認；' : ''}台股交易日 08:00 觸發，休市日保留最近報告。`;
+    status.textContent = `${mode === 'latest' ? '最新模式｜' : '歷史模式｜'}${old ? '目前顯示歷史報告' : '目前顯示今日報告'}：${entry.date}｜產出 ${entry.generated_at.replace('T', ' ')}。${entry.status === 'partial' ? '部分資料未確認；' : ''}台股交易日 08:00 觸發，休市日保留最近報告。`;
     status.classList.toggle('historical', old);
     const panel = document.querySelector('#delivery-status');
     if (!panel) return;
@@ -64,79 +72,130 @@
   }
 
   async function loadDelivery() {
+    const version = ++deliveryVersion;
+    const reportVersion = requestVersion;
+    const results = await Promise.allSettled([
+      fetch('data/delivery.json', {cache: 'no-store', signal: AbortSignal.timeout(5000)}).then(r => r.ok ? r.json() : null),
+      fetch('https://raw.githubusercontent.com/cjw9223233/PMOT/main/.pmot/deployment.json', {cache: 'no-store', signal: AbortSignal.timeout(5000)}).then(r => r.ok ? r.json() : null)
+    ]);
+    if (version !== deliveryVersion) return;
+    delivery = results[0].status === 'fulfilled' ? results[0].value : null;
+    receipt = results[1].status === 'fulfilled' ? results[1].value : null;
+    if (currentEntry && reportVersion === requestVersion) describe(currentEntry);
+  }
+
+  function updateURL() {
+    const url = new URL(location.href);
+    if (mode === 'history' && historyPath) url.searchParams.set('report', historyPath);
+    else url.searchParams.delete('report');
+    history.replaceState(null, '', url);
+  }
+
+  async function load(entry) {
+    const version = ++requestVersion;
+    const expectedMode = mode;
+    const expectedHistory = historyPath;
+    status.textContent = '正在讀取報告…';
     try {
-      const result = await fetch('data/delivery.json', {cache: 'no-store', signal: AbortSignal.timeout(5000)});
-      if (result.ok) delivery = await result.json();
-      // 純靜態網站的套件早於部署完成，故以 main 的成功收據補上確認時間。
-      const confirmed = await fetch('https://raw.githubusercontent.com/cjw9223233/PMOT/main/.pmot/deployment.json', {cache: 'no-store', signal: AbortSignal.timeout(5000)});
-      if (confirmed.ok) receipt = await confirmed.json();
-    } catch (_) { /* 收據連線失敗不影響報告閱讀；只顯示未確認。 */ }
+      if (!/^data\/[\w-]+\.html$/.test(entry.content)) throw new Error('報告路徑不正確');
+      const result = await fetch(entry.content, {cache: 'no-cache', signal: AbortSignal.timeout(10000)});
+      if (!result.ok) throw new Error('報告內容讀取失敗');
+      const content = await result.text();
+      if (version !== requestVersion || mode !== expectedMode || historyPath !== expectedHistory) return;
+      const parsed = new DOMParser().parseFromString(content, 'text/html');
+      parsed.querySelectorAll('script,iframe,object,embed').forEach(node => node.remove());
+      // 成功載入後才一起更新內容與日期，舊 index 不得只換新標籤而保留舊內文。
+      document.querySelector('#report-content').replaceChildren(...parsed.body.childNodes);
+      currentEntry = entry;
+      picker.value = entry.content;
+      document.title = `${entry.date}｜台股開盤前外部市場觀察 · PMOT`;
+      updateURL();
+      describe(entry);
+      bindNavigation();
+      return true;
+    } catch (error) {
+      if (version === requestVersion) {
+        if (currentEntry) picker.value = currentEntry.content;
+        status.textContent = `${error.message}；保留目前內容，尚未確認已切換。`;
+      }
+      return false;
+    }
+  }
+
+  function refresh() {
+    // focus、visibility 與計時器可能同時觸發；合併為同一個清單請求。
+    if (refreshing) return refreshing;
+    ++deliveryVersion;
+    refreshing = (async () => {
+      try {
+        const response = await fetch('data/reports.json', {cache: 'no-store', signal: AbortSignal.timeout(10000)});
+        if (!response.ok) throw new Error('報告清單讀取失敗');
+        const list = await response.json();
+        if (!Array.isArray(list)) throw new Error('報告清單格式不正確');
+        const seen = new Set();
+        entries = list.filter(e => e && /^data\/[\w-]+\.html$/.test(e.content) &&
+          /^\d{4}-\d{2}-\d{2}$/.test(e.date) && typeof e.generated_at === 'string' &&
+          Number.isFinite(Date.parse(e.generated_at)) && !seen.has(e.content) && seen.add(e.content))
+          .sort((a, b) => Date.parse(b.generated_at) - Date.parse(a.generated_at));
+        if (!entries.length) throw new Error('尚無可讀報告');
+        let selected = mode === 'history' ? entries.find(e => e.content === historyPath) : entries[0];
+        if (!selected && currentEntry) throw new Error('所選歷史報告暫不在清單中');
+        if (!selected) { mode = 'latest'; historyPath = null; selected = entries[0]; }
+        picker.replaceChildren(...entries.map(e => new Option(`${e.date} ${e.generated_at.slice(11, 16)}${e.status === 'partial' ? ' · 部分未確認' : ''}`, e.content)));
+        picker.disabled = false;
+        picker.value = selected.content;
+        if (!currentEntry || currentEntry.content !== selected.content) { if (!await load(selected)) return; }
+        else { updateURL(); describe(currentEntry); }
+        // 交付查核不阻塞報告載入，且不會切換使用者選擇的歷史日期。
+        void loadDelivery();
+      } catch (error) {
+        if (!currentEntry) picker.disabled = true;
+        status.textContent = `${error.message}；保留目前內容，未以舊資料冒充最新報告。`;
+      }
+    })().finally(() => { refreshing = null; });
+    return refreshing;
   }
 
   async function start() {
     bindNavigation();
     if (document.body.dataset.index !== 'true') {
-      // 獨立歷史頁只顯示該份快照，沒有首頁的相對資料清單路徑。
       picker.replaceChildren(new Option('單份歷史報告', ''));
       picker.disabled = true;
+      if (latestButton) latestButton.hidden = true;
       return;
     }
-    // 清單會隨排程更新，因此每次載入首頁取得新清單；歷史內容則保持固定。
-    const response = await fetch('data/reports.json', {cache: 'no-store'});
-    if (!response.ok) throw new Error('報告清單讀取失敗');
-    const entries = await response.json();
-    if (!Array.isArray(entries) || !entries.length) throw new Error('尚無報告');
-    // 不讓部署資訊網路請求阻塞市場報告；完成後更新目前選定報告的狀態。
-    loadDelivery().then(() => {
-      const selected = entries.find(item => item.content === picker.value);
-      if (selected) describe(selected);
-    });
-    picker.replaceChildren(...entries.map(item => new Option(`${item.date} ${item.generated_at.slice(11, 16)}${item.status === 'partial' ? ' · 部分未確認' : ''}`, item.content)));
-    const requested = new URL(location.href).searchParams.get('report');
-
-    async function load(entry, updateURL = true) {
-      const version = ++requestVersion;
-      status.textContent = '正在讀取報告…';
-      try {
-        // entry 先由清單白名單選出，再限制相對路徑；不能把網址參數直接當任意 URL。
-        if (!/^data\/[\w-]+\.html$/.test(entry.content)) throw new Error('報告路徑不正確');
-        const result = await fetch(entry.content, {cache: 'no-cache'});
-        if (!result.ok) throw new Error('報告內容讀取失敗');
-        const content = await result.text();
-        if (version !== requestVersion) return;
-        // 內容來自同站、已由 Python 跳脫的片段。移除高風險標籤是額外防護，
-        // 不是完整的外部 HTML 消毒器；不可拿這段程式直接接任意第三方 HTML。
-        const parsed = new DOMParser().parseFromString(content, 'text/html');
-        parsed.querySelectorAll('script,iframe,object,embed').forEach(node => node.remove());
-        document.querySelector('#report-content').replaceChildren(...parsed.body.childNodes);
-        picker.value = entry.content;
-        document.title = `${entry.date}｜台股開盤前外部市場觀察 · PMOT`;
-        describe(entry);
-        if (updateURL) {
-          // 更新分享連結，保留單頁體驗；replaceState 不會重新下載整個首頁。
-          const url = new URL(location.href);
-          url.searchParams.set('report', entry.content);
-          history.replaceState(null, '', url);
-        }
-        bindNavigation();
-      } catch (error) {
-        // 只讓最新請求顯示錯誤。內容到成功後才替換，載入失敗時仍保留原報告。
-        if (version === requestVersion) status.textContent = `${error.message}；保留原本顯示的報告。請稍後重試。`;
-      }
+    // 舊快照可能沒有新按鈕；載入新版 JS 時補上，保留歷史模式回到最新的入口。
+    if (!latestButton) {
+      latestButton = document.createElement('button');
+      latestButton.id = 'latest-report';
+      latestButton.type = 'button';
+      latestButton.className = 'button';
+      latestButton.textContent = '回到最新';
+      document.querySelector('.toolbar')?.append(latestButton);
     }
-    picker.addEventListener('change', () => {
-      const entry = entries.find(item => item.content === picker.value);
-      if (entry) load(entry);
+    latestButton.addEventListener('click', () => {
+      ++requestVersion;
+      mode = 'latest'; historyPath = null; updateURL();
+      return refresh();
     });
-    const selected = entries.find(item => item.content === requested);
-    // 沒指定歷史項目時，HTML 已內嵌最新報告，只更新狀態就好，不重抓一次內容。
-    if (selected) await load(selected, false);
-    else describe(entries[0]);
+    picker.addEventListener('change', () => {
+      const entry = entries.find(e => e.content === picker.value);
+      if (!entry) return;
+      mode = 'history'; historyPath = entry.content;
+      return load(entry);
+    });
+    const checkLatest = () => {
+      if (mode === 'latest' && document.visibilityState !== 'hidden') return refresh();
+    };
+    window.addEventListener('focus', checkLatest);
+    document.addEventListener('visibilitychange', checkLatest);
+    setInterval(checkLatest, 60000);
+    await refresh();
   }
   start().catch(() => {
     // 例如 file:// 限制或清單暫時無法取得：保留預先產出的可閱讀內容。
     picker.replaceChildren(new Option('目前報告', ''));
     picker.disabled = true;
-    status.textContent = '歷史清單暫時無法讀取，目前報告仍可閱讀。請透過網站網址開啟以使用日期切換。';
+    status.textContent = '報告清單暫時無法讀取，保留目前內容。請透過網站網址開啟。';
   });
 })();

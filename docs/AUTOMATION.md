@@ -6,6 +6,8 @@ PMOT 每天由 GitHub Actions 啟動，呼叫 Python 查資料、產生報告並
 
 新增的 [Cloudflare Worker](CLOUDFLARE_SETUP.md)可在完成帳號／Secret／部署後獨立喚醒同一 Actions，並查核交付；原 GitHub 排程保留。以下圖仍描述 Actions 內部流程，Worker 相當於另一個帶來源標籤的手動 API 入口，不移走 Python 或 Pages。
 
+網站整合後，同一 Worker 也提供靜態首頁與歷史報告，與 GitHub Pages 使用同一快照並由 runner 外部驗證。前端最新／歷史模式、雙站失敗恢復及統一人工重建入口見 [最新報告網站](LATEST_SITE.md)。
+
 第一次閱讀建議先看第 1、2 張圖，再依問題看後面的細節。圖中方框表示步驟，菱形表示條件，箭頭上的文字表示走哪個分支；「略過」是正常結束，「失敗」需要查看紀錄。
 
 | 新手會遇到的詞 | 在 PMOT 的意思 |
@@ -35,8 +37,8 @@ flowchart TD
         DECIDE[交易日與交付狀態判斷]
         REPORT[需要新報告才查行情、驗證及產生檔案]
     end
-    subgraph Website[GitHub Pages 與訪客瀏覽器]
-        HOST[Pages 提供靜態網站]
+    subgraph Website[Cloudflare、GitHub Pages 與訪客瀏覽器]
+        HOST[兩站提供同一快照靜態網站]
         FRONT[前端顯示報告、歷史切換與交付狀態]
     end
     PR --> CI[Actions 的 PR 檢查]
@@ -122,11 +124,11 @@ flowchart TD
     A[Python package：記錄部署準備時間與 pending 狀態] --> B[Actions：提交 site、封裝網站]
     B -->|成功| C[Actions：第一次 Pages 部署，最多等待兩分鐘]
     B -->|失敗| FAIL[本次失敗，不寫成功收據]
-    C -->|成功| E[Actions：checkout main、呼叫 Python confirm]
+    C -->|成功| E[Actions：部署 Cloudflare 並核對兩站公開內容]
     C -->|失敗| D[Actions：第二次 Pages 部署，最多等待兩分鐘]
     D -->|成功| E
     D -->|失敗| FAIL
-    E --> F{run、attempt、報告及網站內容相符嗎？}
+    E --> F{兩站 proof、run、attempt 與內容相符嗎？}
     F -->|否| FAIL
     F -->|是| G[Python：寫入 success 收據與部署確認時間]
     G --> H[Actions：提交 .pmot/deployment.json 至 main]
