@@ -1,8 +1,10 @@
 # Cloudflare 免費獨立觸發：新手設定與驗收
 
-[回 README](../README.md) · [自動化流程](AUTOMATION.md) · [GitHub 交付機制](DELIVERY.md)
+[回 README](../README.md) · [部署逐步指南](CLOUDFLARE_DEPLOY_STEP_BY_STEP.md) · [自動化流程](AUTOMATION.md) · [GitHub 交付機制](DELIVERY.md)
 
-Cloudflare Worker 負責喚醒及查核，行情、交易日判斷、HTML 與 Pages 部署仍由 GitHub Actions／Python 執行。GitHub 原有 08:00、08:17、08:37 備援全部保留；沒有遷移網站、啟用付費方案或常駐本機程式。**檔案合併不等於 Worker 已上線**，須完成登入、設定 Secret、部署及下列驗收。
+Cloudflare Worker 負責喚醒、查核與提供靜態網站，行情、交易日判斷、HTML 產出及雙站部署流程由 GitHub Actions／Python 執行，GitHub Pages 同步保留。GitHub 原有 08:00、08:17、08:37 備援全部保留，無須啟用付費方案或常駐本機程式。**檔案合併不等於 Worker 已上線**，須完成憑證設定、部署及下列驗收。
+
+第一次設定請依[Cloudflare 部署逐步指南](CLOUDFLARE_DEPLOY_STEP_BY_STEP.md)操作；該文件整理 2026-11-25 新版 Policies 介面與本次設定過程。本文件補充獨立觸發、交付狀態及日常維運。
 
 原專案已於 2026-11-20 完成部署與 Cron 啟用，實測與待驗收項目見[上線紀錄](audits/2026-11-20-cloudflare-activation.md)。以下步驟供重建、更新或其他帳號使用；不必重設已存在的金鑰。
 
@@ -62,11 +64,16 @@ Actions write 用於喚醒及讀 run；Contents read 用於讀取查核紀錄、
 
 報告現在由同一個每日 workflow 發布到 Cloudflare Worker 靜態網站與 GitHub Pages。只在兩站公開內容驗證通過後寫成功收據。設定一次後，每日不需要本機登入。
 
-1. 開啟 [Cloudflare 個人 API Tokens](https://dash.cloudflare.com/profile/api-tokens) → Create Token。
-2. 在 API token templates 找 **Edit Cloudflare Workers** → Use template。找不到時可 Create Custom Token，設定 `Account → Workers Scripts → Edit`、`Account → Account Settings → Read`。
-3. Token 名稱可填 `PMOT GitHub Deploy`。Account Resources 選 `Include → Specific account`，僅選 PMOT 所在帳號；Client IP Filtering 留空，避免 GitHub runner IP 變動被擋。記錄金鑰到期日。
-4. Continue to summary → Create Token，將值直接複製到 [PMOT Actions Secrets](https://github.com/cjw9223233/PMOT/settings/secrets/actions) → New repository secret，名稱為 `CLOUDFLARE_API_TOKEN`。
-5. Repository variables 應有 `CLOUDFLARE_ACCOUNT_ID`，填 Cloudflare Account ID，不是 Zone ID；原專案已設定。
+1. 開啟 [Cloudflare 個人 API Tokens](https://dash.cloudflare.com/profile/api-tokens) → **Create Token**，選 **Edit Cloudflare Workers** 範本或自訂 Token。名稱填 `PMOT GitHub Deploy`。
+2. 在新版 **Policies** 找 **Account policy**，按卡片右側鉛筆；沒有卡片時從 **Add new policy** 新增 Account policy。
+3. 在 **Edit Account policy** 最上方保留 **Include**，將右側 **All accounts** 改成 PMOT 所在帳號。本專案 Account ID 為 `dcdc6dd83b0f815de3d5ef4dd7657422`。若無法改選，先按帳號欄位的 **×** 清除再選。新版在政策內設定帳號範圍，無須尋找舊版獨立的資源範圍欄位。
+4. 清空權限搜尋框，展開 **Bulk Select → Clear all permissions**，清除 Account policy 中原有權限；這也會清除已勾選的必要項目。接著搜尋 **Workers Scripts** 並勾 **Edit**，再搜尋 **Account Settings** 並勾 **Read**。名稱只有 **Workers** 的另一列不必勾選。搜尋只篩選畫面，不會清除隱藏的勾選。
+5. 若有不需要的 **Zone policy** 或 **User policy**，用各卡片右側的紅色垃圾桶移除；Account policy 的 Clear all 不會代為清除其他政策。最後只保留指定帳號的 Account policy 與上述兩項權限。
+6. **Client IP address filtering** 不填 IP 限制，避免 GitHub runner IP 變動被擋；設定並記錄到期日。按 **Continue to summary**，核對名稱、指定帳號、`Workers Scripts: Edit` 與 `Account Settings: Read`。摘要的 **Entire [帳號名稱] account** 表示涵蓋該指定帳號內的資源，並非僅限 PMOT Worker。
+7. 確認後按 **Create Token**，複製只顯示一次的 Token 值，直接存入 [PMOT Actions Secrets](https://github.com/cjw9223233/PMOT/settings/secrets/actions) → **Secrets → New repository secret**。Name 填 `CLOUDFLARE_API_TOKEN`，Secret 貼 Token 值，按 **Add secret**；同名項目已存在則更新原項目。不要貼到聊天、截圖或原始碼。
+8. 在 **Variables** 分頁確認 Repository variable `CLOUDFLARE_ACCOUNT_ID` 為上述 Account ID，不是 Zone ID。原專案已設定；workflow 讀取 `vars.CLOUDFLARE_ACCOUNT_ID`，僅新增同名 Secret 不會取代這個 Variable。
+
+金鑰儲存完成不代表發布成功，仍需執行後續部署與兩站公開驗證。未來增加自有網域、KV 或其他服務時，再依實際需求評估額外權限。
 
 | 存放位置 | 名稱 | 用途 |
 | --- | --- | --- |
@@ -79,7 +86,9 @@ Actions write 用於喚醒及讀 run；Contents read 用於讀取查核紀錄、
 
 需要人工重建時，在 Actions 執行 `Deploy independent Cloudflare trigger`。它現在只送出 `rebuild_only=true` 的每日發布請求，**請繼續追蹤 Daily market report and GitHub Pages 的結果**；請求受理不等於網站部署成功。人工重建不查新行情，仍用既有快照。原 GitHub 三時槽保留。
 
-## 5. 本機網路正常時：登入並設定 Secret（替代方式）
+## 5. 本機維護：登入與設定 Worker runtime Secrets
+
+本機 OAuth 登入用於人工維護，不會取代第 4 節供 GitHub CI 使用的 API Token。以下 Secret 指 Worker 執行時的 GitHub token 與查核密碼；既有值不必因新增部署 Token 而重設。
 
 ```powershell
 # 此步會開啟 Cloudflare 瀏覽器授權；確認選擇你自己的 Free 帳號。
@@ -171,7 +180,8 @@ npm run tail
 
 ## 8. 更新金鑰、停用與故障排除
 
-- 金鑰到期／撤銷：重新建立同權限 token，再執行 `npx wrangler secret put GITHUB_TOKEN`。401／403 不會被當成缺報告，也不會盲目 dispatch。
+- Cloudflare 部署 Token 到期／撤銷：重新建立同帳號同權限的 Cloudflare token，更新 GitHub Repository secret `CLOUDFLARE_API_TOKEN`，再驗證完整發布。
+- Worker 的 GitHub token 到期／撤銷：重新建立同權限的 GitHub token，再執行 `npx wrangler secret put GITHUB_TOKEN`。兩種 Token 不可混用；401／403 不會被當成缺報告，也不會盲目 dispatch。
 - API 422：先確認 main 有 `trigger_source`、`requested_at` inputs；不要移除原 `workflow_dispatch`。
 - `github_dispatch_outcome_unknown`：請求可能已受理，先看 Actions，不立即手動連按。
 - 08:55 失敗事件：查 state；可能是 GitHub 排隊、官方交易日不明或網站版本未同步，不能一律歸咎市場資料。

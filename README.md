@@ -10,6 +10,7 @@
 | --- | --- |
 | 用流程圖看懂全部自動化，以及 Actions、Python、前端與 Codex 的分工 | [自動化流程圖與分工](docs/AUTOMATION.md) |
 | 從零安裝、啟動網站、完成第一個練習 | [新手快速上手](docs/GETTING_STARTED.md) |
+| 依新版 Policies 介面逐步設定 Cloudflare Token、GitHub Secret、部署與維護 | [Cloudflare 部署逐步指南](docs/CLOUDFLARE_DEPLOY_STEP_BY_STEP.md) |
 | 設定 Cloudflare 免費獨立觸發、金鑰、交付查核與驗收 | [Cloudflare 新手設定](docs/CLOUDFLARE_SETUP.md) |
 | 理解首頁最新模式、保留歷史選擇與每日雙站部署 | [最新報告網站](docs/LATEST_SITE.md) |
 | 理解程式模組、資料流與自動產物 | [架構與資料流程](docs/ARCHITECTURE.md) |
@@ -22,7 +23,7 @@
 
 ## 網站與執行方式
 
-- 網站：[cjw9223233.github.io/PMOT](https://cjw9223233.github.io/PMOT/)
+- 主站：[Cloudflare](https://pmot-independent-trigger.cjw-9223233.workers.dev/)；同步保留 [GitHub Pages](https://cjw9223233.github.io/PMOT/)。
 - 排程：每天 **08:00 Asia/Taipei** 主排程，**08:17、08:37** 補跑，先查核 TWSE 官方年度休市行事曆與新聞公告。正常交易日產出新報告，休市日保留最近報告。
 - 首頁為最新報告；日期選單可切換歷次報告，支援手機、章節導覽、分享選定日期與列印。
 - 每項區分【事實】【解讀】【不確定性】，附來源、實際日期時間、單位及計算口徑。無法確認的資料不補值。
@@ -30,13 +31,13 @@
 
 ## 自動更新流程
 
-`GitHub Actions → 交易日與公告查核 → 獨立來源查詢 → 日期／時段／單位驗證 → HTML + JSON → Git commit → GitHub Pages`
+`GitHub Actions → 交易日與公告查核 → 獨立來源查詢 → 日期／時段／單位驗證 → HTML + JSON → Git commit → GitHub Pages + Cloudflare → 雙站公開驗證 → 成功收據`
 
 專案另提供 `cloudflare/` 免費 Worker：台北 08:00、08:10、08:30 獨立喚醒／條件補跑，08:45、08:55 查核收據與公開網站。GitHub 原三時槽保留。程式合併不代表已上線，必須另完成 Cloudflare 登入、Secret 與部署；步驟見[設定指南](docs/CLOUDFLARE_SETUP.md)。
 
-本專案的 Worker 已於 **2026-11-20 啟用 Cron**：[基本健康端點](https://pmot-independent-trigger.cjw-9223233.workers.dev/health)。GitHub 讀取、收據與公開網站核對已實測；首次真實 Cron 喚醒及後續五個交易日的時效尚待驗收，詳見[上線紀錄](docs/audits/2026-11-20-cloudflare-activation.md)。
+本專案的 Worker 已於 **2026-11-20 啟用 Cron**：[基本健康端點](https://pmot-independent-trigger.cjw-9223233.workers.dev/health)。初次設定見[上線紀錄](docs/audits/2026-11-20-cloudflare-activation.md)；[11/25 驗收](docs/audits/2026-11-25-cloudflare-site.md)已記錄當日 Cloudflare 喚醒、08:01:09 原報告交付，以及 09:48:30 網站改版雙站發布。未來交易日的時效仍須持續核對。
 
-[11/20 初次驗收](docs/audits/2026-11-20-cloudflare-acceptance.md)已核對實際 Cron 歷史與 GitHub 清單：尚未到首個排程時槽，不能據此宣稱自動喚醒、休市或準時率通過。
+[11/20 初次驗收](docs/audits/2026-11-20-cloudflare-acceptance.md)保留當時尚未到首個排程時槽的查核結果，不代表目前服務狀態。
 
 程式使用 Python 3.12 標準函式庫；Windows 若缺 IANA 時區資料，需要在虛擬環境安裝 `tzdata`，步驟見快速上手。行情來源可能限流；每一項各自失敗時列「資料未確認」。全部市場來源失敗、交易日無法確認或近期有需人工判讀的休市公告時，會在產出新報告前停止。官方新聞清單的異動檢查採保守門檻，可能需要人工確認；不得把未確認狀態當作正常開市。檔案寫入中斷的限制與恢復方式見維運手冊。
 
