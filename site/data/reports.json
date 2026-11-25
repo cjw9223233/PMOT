@@ -1,5 +1,12 @@
 [
   {
+    "date": "2026-11-25",
+    "generated_at": "2026-11-25T08:00:44+08:00",
+    "content": "data/2026-11-25_080044.html",
+    "path": "reports/2026-11-25_080044.html",
+    "status": "verified"
+  },
+  {
     "date": "2026-11-24",
     "generated_at": "2026-11-24T08:00:46+08:00",
     "content": "data/2026-11-24_080046.html",
