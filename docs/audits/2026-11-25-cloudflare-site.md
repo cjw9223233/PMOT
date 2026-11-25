@@ -2,6 +2,8 @@
 
 [功能說明](../LATEST_SITE.md) · [設定指南](../CLOUDFLARE_SETUP.md)
 
+後續逐日核對見 [11/21～11/25 每日自動更新查核](2026-11-25-daily-automation.md)，包含主排程、補跑、首次交付與首頁切換測試的證據範圍。
+
 本次已上線至 [Cloudflare 主站](https://pmot-independent-trigger.cjw-9223233.workers.dev/) 與 [GitHub Pages](https://cjw9223233.github.io/PMOT/)。以下時間均為 Asia/Taipei；這是當次實測，未代表未來排程必然準時。
 
 ## 實際部署證據

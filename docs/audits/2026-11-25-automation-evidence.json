@@ -1,0 +1,601 @@
+{
+  "checked_date_taipei": "2026-11-25",
+  "scope": "Cloudflare trigger since 2026-11-21; dual-site hosting introduced 2026-11-25 09:48:30+08:00",
+  "runs": [
+    {
+      "run_id": "44840843328",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/44840843328",
+      "created_at": "2026-11-21T00:00:27Z",
+      "conclusion": "success",
+      "schedule": "",
+      "source": "cloudflare",
+      "external_requested_at": "2026-11-21T00:00:24.308Z",
+      "market_state": "closed",
+      "decision": "skip",
+      "trigger_delay_seconds": null,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-21T00:00:44Z"
+        },
+        {
+          "name": "deploy",
+          "status": "skipped",
+          "completed_at": "2026-11-21T00:00:44Z"
+        }
+      ]
+    },
+    {
+      "run_id": "44865910559",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/44865910559",
+      "created_at": "2026-11-21T04:23:54Z",
+      "conclusion": "success",
+      "schedule": "0 8 * * *",
+      "source": "schedule",
+      "external_requested_at": null,
+      "market_state": "closed",
+      "decision": "skip",
+      "trigger_delay_seconds": 15834,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-21T04:24:07Z"
+        },
+        {
+          "name": "deploy",
+          "status": "skipped",
+          "completed_at": "2026-11-21T04:24:07Z"
+        }
+      ]
+    },
+    {
+      "run_id": "44878650595",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/44878650595",
+      "created_at": "2026-11-21T07:06:10Z",
+      "conclusion": "success",
+      "schedule": "17 8 * * *",
+      "source": "schedule",
+      "external_requested_at": null,
+      "market_state": "closed",
+      "decision": "skip",
+      "trigger_delay_seconds": 24550,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-21T07:06:30Z"
+        },
+        {
+          "name": "deploy",
+          "status": "skipped",
+          "completed_at": "2026-11-21T07:06:30Z"
+        }
+      ]
+    },
+    {
+      "run_id": "44881327359",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/44881327359",
+      "created_at": "2026-11-21T07:40:28Z",
+      "conclusion": "success",
+      "schedule": "37 8 * * *",
+      "source": "schedule",
+      "external_requested_at": null,
+      "market_state": "closed",
+      "decision": "skip",
+      "trigger_delay_seconds": 25408,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-21T07:40:41Z"
+        },
+        {
+          "name": "deploy",
+          "status": "skipped",
+          "completed_at": "2026-11-21T07:40:41Z"
+        }
+      ]
+    },
+    {
+      "run_id": "44964496498",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/44964496498",
+      "created_at": "2026-11-22T00:00:27Z",
+      "conclusion": "success",
+      "schedule": "",
+      "source": "cloudflare",
+      "external_requested_at": "2026-11-22T00:00:24.676Z",
+      "market_state": "closed",
+      "decision": "skip",
+      "trigger_delay_seconds": null,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-22T00:00:44Z"
+        },
+        {
+          "name": "deploy",
+          "status": "skipped",
+          "completed_at": "2026-11-22T00:00:44Z"
+        }
+      ]
+    },
+    {
+      "run_id": "44981547639",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/44981547639",
+      "created_at": "2026-11-22T03:38:19Z",
+      "conclusion": "success",
+      "schedule": "0 8 * * *",
+      "source": "schedule",
+      "external_requested_at": null,
+      "market_state": "closed",
+      "decision": "skip",
+      "trigger_delay_seconds": 13099,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-22T03:38:34Z"
+        },
+        {
+          "name": "deploy",
+          "status": "skipped",
+          "completed_at": "2026-11-22T03:38:34Z"
+        }
+      ]
+    },
+    {
+      "run_id": "44995279135",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/44995279135",
+      "created_at": "2026-11-22T06:47:02Z",
+      "conclusion": "success",
+      "schedule": "17 8 * * *",
+      "source": "schedule",
+      "external_requested_at": null,
+      "market_state": "closed",
+      "decision": "skip",
+      "trigger_delay_seconds": 23402,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-22T06:47:14Z"
+        },
+        {
+          "name": "deploy",
+          "status": "skipped",
+          "completed_at": "2026-11-22T06:47:14Z"
+        }
+      ]
+    },
+    {
+      "run_id": "44998184477",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/44998184477",
+      "created_at": "2026-11-22T07:25:41Z",
+      "conclusion": "success",
+      "schedule": "37 8 * * *",
+      "source": "schedule",
+      "external_requested_at": null,
+      "market_state": "closed",
+      "decision": "skip",
+      "trigger_delay_seconds": 24521,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-22T07:25:59Z"
+        },
+        {
+          "name": "deploy",
+          "status": "skipped",
+          "completed_at": "2026-11-22T07:25:59Z"
+        }
+      ]
+    },
+    {
+      "run_id": "45086248424",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/45086248424",
+      "created_at": "2026-11-23T00:00:27Z",
+      "conclusion": "success",
+      "schedule": "",
+      "source": "cloudflare",
+      "external_requested_at": "2026-11-23T00:00:24.530Z",
+      "market_state": "open",
+      "decision": "generate",
+      "trigger_delay_seconds": null,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-23T00:00:58Z"
+        },
+        {
+          "name": "deploy",
+          "status": "success",
+          "completed_at": "2026-11-23T00:01:17Z"
+        }
+      ]
+    },
+    {
+      "run_id": "45110427198",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/45110427198",
+      "created_at": "2026-11-23T04:12:27Z",
+      "conclusion": "success",
+      "schedule": "0 8 * * *",
+      "source": "schedule",
+      "external_requested_at": null,
+      "market_state": "open",
+      "decision": "skip",
+      "trigger_delay_seconds": 15147,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-23T04:12:53Z"
+        },
+        {
+          "name": "deploy",
+          "status": "skipped",
+          "completed_at": "2026-11-23T04:12:53Z"
+        }
+      ]
+    },
+    {
+      "run_id": "45132457758",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/45132457758",
+      "created_at": "2026-11-23T07:37:28Z",
+      "conclusion": "success",
+      "schedule": "17 8 * * *",
+      "source": "schedule",
+      "external_requested_at": null,
+      "market_state": "open",
+      "decision": "skip",
+      "trigger_delay_seconds": 26428,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-23T07:37:45Z"
+        },
+        {
+          "name": "deploy",
+          "status": "skipped",
+          "completed_at": "2026-11-23T07:37:46Z"
+        }
+      ]
+    },
+    {
+      "run_id": "45136481496",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/45136481496",
+      "created_at": "2026-11-23T08:10:31Z",
+      "conclusion": "success",
+      "schedule": "37 8 * * *",
+      "source": "schedule",
+      "external_requested_at": null,
+      "market_state": "open",
+      "decision": "skip",
+      "trigger_delay_seconds": 27211,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-23T08:10:48Z"
+        },
+        {
+          "name": "deploy",
+          "status": "skipped",
+          "completed_at": "2026-11-23T08:10:49Z"
+        }
+      ]
+    },
+    {
+      "run_id": "45293569259",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/45293569259",
+      "created_at": "2026-11-24T00:00:28Z",
+      "conclusion": "success",
+      "schedule": "",
+      "source": "cloudflare",
+      "external_requested_at": "2026-11-24T00:00:24.479Z",
+      "market_state": "open",
+      "decision": "generate",
+      "trigger_delay_seconds": null,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-24T00:00:52Z"
+        },
+        {
+          "name": "deploy",
+          "status": "success",
+          "completed_at": "2026-11-24T00:01:25Z"
+        }
+      ]
+    },
+    {
+      "run_id": "45346165394",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/45346165394",
+      "created_at": "2026-11-24T07:12:09Z",
+      "conclusion": "success",
+      "schedule": "0 8 * * *",
+      "source": "schedule",
+      "external_requested_at": null,
+      "market_state": "open",
+      "decision": "skip",
+      "trigger_delay_seconds": 25929,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-24T07:12:23Z"
+        },
+        {
+          "name": "deploy",
+          "status": "skipped",
+          "completed_at": "2026-11-24T07:12:23Z"
+        }
+      ]
+    },
+    {
+      "run_id": "45369437542",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/45369437542",
+      "created_at": "2026-11-24T09:53:17Z",
+      "conclusion": "success",
+      "schedule": "17 8 * * *",
+      "source": "schedule",
+      "external_requested_at": null,
+      "market_state": "open",
+      "decision": "skip",
+      "trigger_delay_seconds": 34577,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-24T09:53:33Z"
+        },
+        {
+          "name": "deploy",
+          "status": "skipped",
+          "completed_at": "2026-11-24T09:53:33Z"
+        }
+      ]
+    },
+    {
+      "run_id": "45374422105",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/45374422105",
+      "created_at": "2026-11-24T10:23:59Z",
+      "conclusion": "success",
+      "schedule": "37 8 * * *",
+      "source": "schedule",
+      "external_requested_at": null,
+      "market_state": "open",
+      "decision": "skip",
+      "trigger_delay_seconds": 35219,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-24T10:24:14Z"
+        },
+        {
+          "name": "deploy",
+          "status": "skipped",
+          "completed_at": "2026-11-24T10:24:14Z"
+        }
+      ]
+    },
+    {
+      "run_id": "45514609439",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/45514609439",
+      "created_at": "2026-11-25T00:00:27Z",
+      "conclusion": "success",
+      "schedule": "",
+      "source": "cloudflare",
+      "external_requested_at": "2026-11-25T00:00:24.439Z",
+      "market_state": "open",
+      "decision": "generate",
+      "trigger_delay_seconds": null,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-25T00:00:50Z"
+        },
+        {
+          "name": "deploy",
+          "status": "success",
+          "completed_at": "2026-11-25T00:01:14Z"
+        }
+      ]
+    },
+    {
+      "run_id": "45528345795",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/45528345795",
+      "created_at": "2026-11-25T01:47:46Z",
+      "conclusion": "success",
+      "schedule": "",
+      "source": "push",
+      "external_requested_at": null,
+      "market_state": "not_checked",
+      "decision": "deploy",
+      "trigger_delay_seconds": null,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-25T01:48:02Z"
+        },
+        {
+          "name": "deploy",
+          "status": "success",
+          "completed_at": "2026-11-25T01:48:33Z"
+        }
+      ]
+    },
+    {
+      "run_id": "45528848997",
+      "url": "https://github.com/cjw9223233/PMOT/actions/runs/45528848997",
+      "created_at": "2026-11-25T01:52:00Z",
+      "conclusion": "success",
+      "schedule": "",
+      "source": "manual",
+      "external_requested_at": null,
+      "market_state": "open",
+      "decision": "skip",
+      "trigger_delay_seconds": null,
+      "jobs": [
+        {
+          "name": "build",
+          "status": "success",
+          "completed_at": "2026-11-25T01:52:16Z"
+        },
+        {
+          "name": "deploy",
+          "status": "skipped",
+          "completed_at": "2026-11-25T01:52:16Z"
+        }
+      ]
+    }
+  ],
+  "first_pages_confirmed_at": {
+    "2026-11-23": "2026-11-23T08:01:13+08:00",
+    "2026-11-24": "2026-11-24T08:01:22+08:00",
+    "2026-11-25": "2026-11-25T08:01:09+08:00"
+  },
+  "cloudflare": {
+    "checked_at": "2026-11-25T10:12:25.4156534+08:00",
+    "schedules": [
+      {
+        "cron": "0,10,30,45,55 0 * * *",
+        "created_on": "2026-11-20T02:03:26.28595Z",
+        "modified_on": "2026-11-20T02:03:26.28595Z"
+      }
+    ],
+    "invocations_returned": [
+      {
+        "cron": "0,10,30,45,55 0 * * *",
+        "datetime": "2026-11-25T00:45:24Z",
+        "status": "success"
+      },
+      {
+        "cron": "0,10,30,45,55 0 * * *",
+        "datetime": "2026-11-25T00:10:24Z",
+        "status": "success"
+      },
+      {
+        "cron": "0,10,30,45,55 0 * * *",
+        "datetime": "2026-11-25T00:55:24Z",
+        "status": "success"
+      },
+      {
+        "cron": "0,10,30,45,55 0 * * *",
+        "datetime": "2026-11-25T00:00:24Z",
+        "status": "success"
+      },
+      {
+        "cron": "0,10,30,45,55 0 * * *",
+        "datetime": "2026-11-25T00:30:24Z",
+        "status": "success"
+      }
+    ],
+    "check_http": 503,
+    "check_result": {
+      "state": "delivered",
+      "day": "2026-11-25",
+      "run_id": "45528345795",
+      "completed_at": "2026-11-25T09:48:30+08:00",
+      "before_open": false
+    }
+  },
+  "cloudflare_public_files": [
+    {
+      "target": "cloudflare",
+      "path": "index.html",
+      "http": 200,
+      "sha256": "5b803ddd709002cfffc686afea583454f14199bb20498affb32bf22b1c7bddb0",
+      "cache_control": "must-revalidate, no-cache, max-age=0"
+    },
+    {
+      "target": "cloudflare",
+      "path": "assets/app.js",
+      "http": 200,
+      "sha256": "597ee7751eac58e67fa98eb2c2928a07d49c50234ff4f3162b97b9afbb00da1f",
+      "cache_control": "must-revalidate, no-cache, max-age=0"
+    },
+    {
+      "target": "cloudflare",
+      "path": "assets/report.css",
+      "http": 200,
+      "sha256": "8d2ed80a86d6f586945b8c9845acdb03d72f05531895ef9f86000aeed00115fc",
+      "cache_control": "must-revalidate, no-cache, max-age=0"
+    },
+    {
+      "target": "cloudflare",
+      "path": "data/reports.json",
+      "http": 200,
+      "sha256": "5d38ca679c3a3eb7243b3c59c4d4f23b9b63982f4bc6d4178ca6f5974aa87bc6",
+      "cache_control": "no-store"
+    },
+    {
+      "target": "cloudflare",
+      "path": "data/delivery.json",
+      "http": 200,
+      "sha256": "36db8ba33ef929c3b58e8b5402f361ccbc50aa70bea1453d8eebf355e50a42a9",
+      "cache_control": "no-store"
+    },
+    {
+      "target": "cloudflare",
+      "path": "data/2026-11-25_080044.html",
+      "http": 200,
+      "sha256": "e26ed1cf0f5454cba2ffd542a4a50f482e9d06c24c0259b6e38746af9e795273",
+      "cache_control": "public, must-revalidate, max-age=0"
+    },
+    {
+      "target": "cloudflare",
+      "path": "data/2026-11-24_080046.html",
+      "http": 200,
+      "sha256": "67354df076f9e7976ab29aef1a8004a2ba04deaeb57584a7036b6916fae122c8",
+      "cache_control": "public, must-revalidate, max-age=0"
+    },
+    {
+      "target": "cloudflare",
+      "path": "data/2026-11-23_080053.html",
+      "http": 200,
+      "sha256": "3dab10db4f565737bf3639af6742a413571973d3538eea4dbe0994f35c11daa5",
+      "cache_control": "public, must-revalidate, max-age=0"
+    },
+    {
+      "target": "cloudflare",
+      "path": "reports/2026-11-25_080044.html",
+      "http": 200,
+      "sha256": "b99a593b07041ad9ec87663ffb21ca4dbbc3bce2a99e7964ee080ccccc8ce5a0",
+      "cache_control": "public, must-revalidate, max-age=0"
+    },
+    {
+      "target": "cloudflare",
+      "path": "reports/2026-11-04_090856.html",
+      "http": 200,
+      "sha256": "bd68944131957eda7a7bcb9ab47071c27d095a1f8ec21c7217aac4ce62e03e1c",
+      "cache_control": "public, must-revalidate, max-age=0"
+    }
+  ],
+  "browser": {
+    "source": "HTTPS-verified Cloudflare files served locally",
+    "staleIndexActualBody": true,
+    "pollLatestActualBody": true,
+    "historyPreserved": true,
+    "returnLatest": true,
+    "viewport": {
+      "width": 390,
+      "pageWidth": 390
+    }
+  },
+  "limits": [
+    "No subsequent trading day exists yet after first dual-site deployment.",
+    "Cron history query returned only 2026-11-25 five invocations; earlier provenance comes from GitHub timing artifacts.",
+    "Current local direct connection to Pages fails; Cloudflare protected check validates Pages delivery metadata, and deployment runner verified full snapshot at publication.",
+    "Real browser interaction used HTTPS-verified Cloudflare files served locally due local Edge certificate trust error."
+  ]
+}
