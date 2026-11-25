@@ -46,6 +46,10 @@ class DeliveryTests(TestCase):
     def decide(self, event='schedule'):
         return prepare(self.site, self.receipt, NOW, event, object())[0]
 
+    def verified_receipt(self, identity):
+        return {'status': 'success', 'report': identity, 'targets': {
+            'github_pages': {'status': 'verified'}, 'cloudflare': {'status': 'verified'}}}
+
     def test_no_report_generates_but_yesterday_is_not_reused(self):
         self.assertEqual(self.decide(), 'generate')
         self.snapshot('2026-11-10')
@@ -62,7 +66,7 @@ class DeliveryTests(TestCase):
     def test_success_receipt_skips_repeated_runs(self):
         entry = self.snapshot()
         self.decide()
-        write_json(self.receipt, {'status': 'success', 'report': report_identity(self.site, entry)})
+        write_json(self.receipt, self.verified_receipt(report_identity(self.site, entry)))
         self.assertEqual(self.decide(), 'skip')
         self.assertEqual(self.decide('workflow_dispatch'), 'skip')
         self.assertEqual(self.decide('push'), 'deploy')
@@ -80,7 +84,7 @@ class DeliveryTests(TestCase):
     def test_asset_change_requires_redeployment(self):
         entry = self.snapshot()
         self.decide()
-        write_json(self.receipt, {'status': 'success', 'report': report_identity(self.site, entry)})
+        write_json(self.receipt, self.verified_receipt(report_identity(self.site, entry)))
         (self.site / 'assets').mkdir()
         (self.site / 'assets/app.js').write_text('changed')
         self.assertEqual(self.decide(), 'deploy')
@@ -92,6 +96,27 @@ class DeliveryTests(TestCase):
             with self.assertRaises(ValueError): self.decide()
         self.assertFalse(self.site.exists())
 
+    def test_manual_rebuild_does_not_query_markets_or_overwrite_official_check(self):
+        self.snapshot()
+        timing = self.root / 'timing.json'
+        check = self.root / 'check.json'
+        closed = {'market_state': 'closed', 'source': 'official calendar'}
+        write_json(check, closed)
+        args = ['delivery', 'prepare', '--site', str(self.site), '--receipt', str(self.receipt),
+                '--timing', str(timing), '--check', str(check)]
+        with patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'workflow_dispatch', 'REBUILD_ONLY': 'true'}), \
+                patch('pmot.delivery.trading_day', side_effect=AssertionError('Rebuild must not query markets')), \
+                patch('sys.argv', args):
+            main()
+        evidence = json.loads(timing.read_text(encoding='utf-8'))
+        self.assertEqual(evidence['decision'], 'deploy')
+        self.assertTrue(evidence['rebuild_only'])
+        self.assertEqual(evidence['market_state'], 'not_checked')
+        args[1] = 'checkpoint'
+        with patch('sys.argv', args):
+            main()
+        self.assertEqual(json.loads(check.read_text(encoding='utf-8')), closed)
+
     def test_missing_snapshot_fails_instead_of_skipping(self):
         self.snapshot()
         (self.site / 'data/report.json').unlink()
@@ -101,8 +126,9 @@ class DeliveryTests(TestCase):
         self.snapshot()
         self.decide()
         timing = self.root / 'timing.json'
+        proof = self.root / 'proof.json'
         write_json(timing, {'run_id': '123', 'run_attempt': '1', 'run_url': 'https://example.com/'})
-        args = ['delivery', 'package', '--site', str(self.site), '--receipt', str(self.receipt), '--timing', str(timing)]
+        args = ['delivery', 'package', '--site', str(self.site), '--receipt', str(self.receipt), '--timing', str(timing), '--proof', str(proof)]
         with patch.dict(os.environ, {'GITHUB_RUN_ID': '123', 'GITHUB_RUN_ATTEMPT': '1'}), patch('sys.argv', args):
             main()
             pending = json.loads(timing.read_text(encoding='utf-8'))
@@ -110,11 +136,38 @@ class DeliveryTests(TestCase):
             self.assertNotIn('deployment_completed_at', pending)
             self.assertFalse(self.receipt.exists())
             args[1] = 'confirm'
+            evidence = self.verified_receipt(pending['report'])
+            evidence.update(run_id='123', run_attempt='1')
+            write_json(proof, evidence)
             main()
             success = json.loads(self.receipt.read_text(encoding='utf-8'))
             self.assertEqual(success['status'], 'success')
             self.assertGreaterEqual(success['deployment_completed_at'], pending['deployment_requested_at'])
         self.assertEqual(self.decide(), 'skip')
+
+    def test_legacy_or_partial_target_receipt_is_redeployed_without_new_report(self):
+        entry = self.snapshot(); self.decide()
+        identity = report_identity(self.site, entry)
+        write_json(self.receipt, {'status': 'success', 'report': identity})
+        self.assertEqual(self.decide(), 'deploy')
+        incomplete = self.verified_receipt(identity)
+        incomplete['targets']['cloudflare']['status'] = 'failed'
+        write_json(self.receipt, incomplete)
+        self.assertEqual(self.decide(), 'deploy')
+        self.assertEqual(len(json.loads((self.site / 'data/reports.json').read_text(encoding='utf-8'))), 1)
+
+    def test_confirmation_requires_both_targets_for_exact_run_and_snapshot(self):
+        entry = self.snapshot(); self.decide()
+        identity = report_identity(self.site, entry)
+        timing, proof = self.root / 'timing.json', self.root / 'proof.json'
+        write_json(timing, {'status': 'pending', 'run_id': '123', 'run_attempt': '1', 'report': identity})
+        args = ['delivery', 'confirm', '--site', str(self.site), '--receipt', str(self.receipt), '--timing', str(timing), '--proof', str(proof)]
+        for evidence in [{}, {'run_id': '123', 'run_attempt': '1', **self.verified_receipt({'wrong': True})},
+                         {'run_id': '999', 'run_attempt': '1', **self.verified_receipt(identity)}]:
+            write_json(proof, evidence)
+            with patch.dict(os.environ, {'GITHUB_RUN_ID': '123', 'GITHUB_RUN_ATTEMPT': '1'}), patch('sys.argv', args):
+                with self.assertRaises(ValueError): main()
+            self.assertFalse(self.receipt.exists())
 
     def test_cannot_confirm_other_run_or_changed_report(self):
         self.snapshot()

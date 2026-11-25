@@ -20,11 +20,17 @@ on:
         description: 'External trigger actual UTC request timestamp, if applicable'
         type: string
         required: false
+      rebuild_only:
+        description: 'Rebuild and publish existing snapshots without querying fresh markets'
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
       - 'pmot/**'
       - 'site/assets/**'
+      - 'site/_headers'
+      - 'cloudflare/**'
       - 'site/prompt.md'
       - 'site/data/reports.json'
       - '.github/workflows/daily-report.yml'
@@ -45,6 +51,7 @@ jobs:
       actions: read
     outputs:
       changed: ${{ steps.publish.outputs.changed }}
+      revision: ${{ steps.publish.outputs.revision }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -69,6 +76,7 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TRIGGER_SOURCE: ${{ inputs.trigger_source }}
           EXTERNAL_REQUESTED_AT: ${{ inputs.requested_at }}
+          REBUILD_ONLY: ${{ inputs.rebuild_only }}
         run: python -m pmot.delivery prepare
       - name: Save official trading day check for independent monitor
         if: always() && steps.prepare.outcome != 'skipped'
@@ -100,6 +108,7 @@ jobs:
             git push origin HEAD:main
           fi
           echo 'changed=true' >> "$GITHUB_OUTPUT"
+          echo "revision=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Package website
         if: steps.publish.outputs.changed == 'true'
         uses: actions/upload-pages-artifact@v4
@@ -114,10 +123,14 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
   deploy:
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER_SEND_METRICS: 'false'
     if: needs.build.outputs.changed == 'true'
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 15
     permissions:
       pages: write
       id-token: write
@@ -126,6 +139,22 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url || steps.retry.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v6
+        with:
+          # 與 Pages artifact 完全相同的 site commit；不拿之後移動的 main 部署資產。
+          ref: ${{ needs.build.outputs.revision }}
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Verify Cloudflare deployment configuration
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo '::error::Missing CLOUDFLARE_API_TOKEN'; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo '::error::Missing CLOUDFLARE_ACCOUNT_ID'; exit 1; }
+      - run: npm ci
+        working-directory: cloudflare
       # 單次最多等待 2 分鐘；暫時失敗在同次 run 再試一次。
       - name: Deploy website
         id: deployment
@@ -139,16 +168,30 @@ jobs:
         uses: actions/deploy-pages@v4
         with:
           timeout: 120000
-      - uses: actions/checkout@v6
-        with:
-          ref: main
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
+      - name: Deploy same snapshot and Worker to Cloudflare
+        id: cloudflare
+        continue-on-error: true
+        timeout-minutes: 3
+        run: npm run deploy
+        working-directory: cloudflare
+      - name: Retry Cloudflare publication
+        if: steps.cloudflare.outcome == 'failure'
+        timeout-minutes: 3
+        run: npm run deploy
+        working-directory: cloudflare
+      - name: Verify both public websites against packaged snapshot
+        env:
+          PUBLICATION_PROOF: ${{ runner.temp }}/publication-proof.json
+        run: node cloudflare/scripts/verify-sites.mjs
       - name: Save success receipt only after confirmed deployment
+        env:
+          PUBLICATION_PROOF: ${{ runner.temp }}/publication-proof.json
         # 任何部署失敗都不會走到這一步；之後補跑將重用相同報告。
         run: |
-          python -m pmot.delivery confirm --timing site/data/delivery.json
+          # 再核對 main 沒有被較新的內容取代；失敗時不寫成功收據。
+          git fetch origin main:refs/remotes/origin/main
+          git checkout --detach origin/main
+          python -m pmot.delivery confirm --timing site/data/delivery.json --proof "$PUBLICATION_PROOF"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add .pmot/deployment.json

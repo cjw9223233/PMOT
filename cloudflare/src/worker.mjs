@@ -80,15 +80,21 @@ export async function inspect(env, now = new Date(), fetcher = fetch) {
   if (currentCheck && check.market_state === 'closed' && check.decision === 'skip') {
     return {state: 'closed', day, reason: check.reason, run_id: check.run_id};
   }
-  if (receiptMatches(receipt, entries, day, now)) {
+  const targetsVerified = !env.ASSETS || ['github_pages', 'cloudflare'].every(name => receipt?.targets?.[name]?.status === 'verified');
+  if (receiptMatches(receipt, entries, day, now) && targetsVerified) {
     let publicMatch = false;
     try {
-      const response = await fetcher(`${env.SITE_URL}/data/delivery.json`, {
-        redirect: 'manual', cache: 'no-store', signal: AbortSignal.timeout(8000)
-      });
-      const site = response.ok ? await response.json() : null;
-      publicMatch = site?.run_id === receipt.run_id && site.run_attempt === receipt.run_attempt &&
+      const matches = site => site?.run_id === receipt.run_id && site.run_attempt === receipt.run_attempt &&
         site.report?.sha256 === receipt.report.sha256 && site.report?.website_sha256 === receipt.report.website_sha256;
+      // 自己的網站使用目前版本的資產 binding，不透過自己的 workers.dev 發遞迴請求。
+      const response = env.ASSETS
+        ? await env.ASSETS.fetch(new Request(`${env.SITE_URL}/data/delivery.json`))
+        : await fetcher(`${env.SITE_URL}/data/delivery.json`, {redirect: 'manual', cache: 'no-store', signal: AbortSignal.timeout(8000)});
+      publicMatch = matches(response.ok ? await response.json() : null);
+      if (publicMatch && env.PAGES_URL) {
+        const pages = await fetcher(`${env.PAGES_URL}/data/delivery.json`, {redirect: 'manual', cache: 'no-store', signal: AbortSignal.timeout(8000)});
+        publicMatch = matches(pages.ok ? await pages.json() : null);
+      }
     } catch { /* 來源收據仍保留，不把公開網站無法確認說成部署失敗。 */ }
     return {state: publicMatch ? 'delivered' : 'site_unverified', day, run_id: receipt.run_id,
       completed_at: receipt.deployment_completed_at,
@@ -139,7 +145,8 @@ export default {
   async fetch(request, env) {
     const path = new URL(request.url).pathname;
     if (path === '/health' && request.method === 'GET') return Response.json({service: 'pmot-trigger', ok: true});
-    if (path !== '/check' || request.method !== 'POST') return new Response('Not found', {status: 404});
+    if (path !== '/check') return env.ASSETS ? env.ASSETS.fetch(request) : new Response('Not found', {status: 404});
+    if (request.method !== 'POST') return new Response('Not found', {status: 404});
     if (!env.CHECK_TOKEN || request.headers.get('Authorization') !== `Bearer ${env.CHECK_TOKEN}`) {
       return new Response('Unauthorized', {status: 401});
     }

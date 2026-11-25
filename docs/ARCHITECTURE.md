@@ -6,6 +6,8 @@
 
 PMOT 是一個「定時查資料、產生固定報告、發佈靜態網站」的程式。Python 負責查詢、驗證、判讀及產生檔案；瀏覽器的 JavaScript 負責切換歷史報告。使用者開啟網站不會觸發行情查詢。
 
+網站已整合為 [Cloudflare 與 GitHub Pages 雙站快照](LATEST_SITE.md)，同一份產物在兩站公開驗證後才寫成功收據。前端有最新／歷史兩種模式；最新模式會重新讀清單及內容，歷史模式保留選擇。
+
 第一次閱讀可先看[自動化流程圖與分工](AUTOMATION.md)，其中六張圖分別解釋角色、每日決策、資料處理、部署恢復、前端及維護流程。下圖為程式架構摘要。
 
 ```mermaid
@@ -23,7 +25,11 @@ flowchart TD
     G --> H[重建首頁、提交 site、封裝部署檔]
     REUSE --> H
     H --> I[Pages 部署，失敗再試一次]
-    I -->|成功| RECEIPT[confirm：驗證內容並提交成功收據]
+    I -->|成功| CF[相同 commit 的 Worker 與靜態資產部署 Cloudflare]
+    CF --> VERIFY[外部核對兩站內容、資產與歷史]
+    VERIFY -->|成功| RECEIPT[confirm：驗證雙站 proof 並提交成功收據]
+    CF -->|失敗| D
+    VERIFY -->|失敗| D
     I -->|失敗| D
     RECEIPT -->|失敗| D
     RECEIPT -->|成功| J[瀏覽器顯示快照並切換歷史報告]

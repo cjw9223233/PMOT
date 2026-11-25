@@ -11,6 +11,11 @@ from .http import Fetcher
 from .render import build_index
 
 ROOT = Path(__file__).resolve().parents[1]
+TARGETS = ('github_pages', 'cloudflare')
+
+
+def targets_verified(receipt):
+    return all(receipt.get('targets', {}).get(name, {}).get('status') == 'verified' for name in TARGETS)
 
 
 def read_json(path, default=None):
@@ -31,7 +36,7 @@ def report_identity(site, entry):
             raise ValueError('Report path escapes site')
         digest.update(path.read_bytes())
     website = hashlib.sha256()
-    for path in sorted([site / 'index.html', site / 'prompt.md', * (site / 'assets').rglob('*')]):
+    for path in sorted([site / 'index.html', site / 'prompt.md', site / '_headers', * (site / 'assets').rglob('*')]):
         if path.is_file():
             website.update(path.relative_to(site).as_posix().encode())
             website.update(path.read_bytes())
@@ -58,7 +63,7 @@ def prepare(site, receipt_path, now, event, fetch=None, gate_info=None):
     build_index(site)
     identity = report_identity(site, latest)  # 缺檔必須報錯，不能假裝已交付。
     receipt = read_json(receipt_path, {})
-    if receipt.get('status') == 'success' and receipt.get('report') == identity:
+    if receipt.get('status') == 'success' and receipt.get('report') == identity and targets_verified(receipt):
         return 'skip', '當日報告已成功部署'
     # 發布時清單已按時間排序；重試不查新行情、不新增另一份報告。
     if entries[0] != latest:
@@ -121,6 +126,7 @@ def main():
     parser.add_argument('--receipt', type=Path, default=ROOT / '.pmot/deployment.json')
     parser.add_argument('--timing', type=Path, default=ROOT / 'delivery-timing.json')
     parser.add_argument('--check', type=Path, default=ROOT / '.pmot/check.json')
+    parser.add_argument('--proof', type=Path, default=ROOT / 'publication-proof.json')
     args = parser.parse_args()
     if args.command == 'prepare':
         now = datetime.now(TAIPEI)
@@ -133,6 +139,7 @@ def main():
                   'date': now.date().isoformat(), 'market_state': 'unknown',
                   'trigger_source': os.environ.get('TRIGGER_SOURCE') or os.environ.get('GITHUB_EVENT_NAME', 'local'),
                   'external_requested_at': os.environ.get('EXTERNAL_REQUESTED_AT') or None,
+                  'rebuild_only': os.environ.get('REBUILD_ONLY') == 'true',
                   'prepared_at': started, 'decision': 'checking',
                   'run_url': os.environ.get('RUN_URL', ''), 'run_id': os.environ.get('GITHUB_RUN_ID', ''),
                   'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT', '1')}
@@ -145,7 +152,8 @@ def main():
         write_json(args.timing, timing)
         gate_info = {}
         try:
-            action, reason = prepare(args.site, args.receipt, now, os.environ.get('GITHUB_EVENT_NAME', 'workflow_dispatch'), gate_info=gate_info)
+            event = 'push' if timing['rebuild_only'] else os.environ.get('GITHUB_EVENT_NAME', 'workflow_dispatch')
+            action, reason = prepare(args.site, args.receipt, now, event, gate_info=gate_info)
         except Exception as exc:
             timing.update(decision='failed', reason=str(exc))
             write_json(args.timing, timing)
@@ -163,13 +171,13 @@ def main():
         if not timing:
             raise ValueError('No check evidence to save')
         # 程式改版 push 不查交易日，不能蓋掉當日官方休市／開市查核證據。
-        if timing.get('event') != 'push':
+        if timing.get('event') != 'push' and timing.get('market_state') != 'not_checked':
             write_json(args.check, timing)
     elif args.command == 'package':
         entry = read_json(args.site / 'data/reports.json')[0]
         timing = read_json(args.timing)
         timing.update(report=report_identity(args.site, entry), generated_at=entry['generated_at'],
-                      deployment_requested_at=clock(), status='pending')
+                      deployment_requested_at=clock(), status='pending', required_targets=list(TARGETS))
         write_json(args.site / 'data/delivery.json', timing)
         write_json(args.timing, timing)
         summary('部署送出時間：' + timing['deployment_requested_at'])
@@ -183,6 +191,11 @@ def main():
         entry = read_json(args.site / 'data/reports.json')[0]
         if report_identity(args.site, entry) != timing['report']:
             raise ValueError('Report changed since packaging; refusing success receipt')
+        proof = read_json(args.proof, {})
+        if (not targets_verified(proof) or proof.get('report') != timing['report'] or
+                proof.get('run_id') != timing['run_id'] or proof.get('run_attempt') != timing['run_attempt']):
+            raise ValueError('Both publication targets must be verified for this exact snapshot and run')
+        timing['targets'] = proof['targets']
         timing.update(status='success', deployment_completed_at=clock())
         timing['timeliness'] = report_timeliness(timing, timing['report']['date'])
         write_json(args.receipt, timing)

@@ -109,6 +109,19 @@ test('Pages unavailable or different version is site_unverified, not delivered',
   }
 });
 
+test('dual-site monitor uses asset binding without self-fetch and requires both targets', async () => {
+  const dual = {...receipt, targets: {github_pages: {status: 'verified'}, cloudflare: {status: 'verified'}}};
+  const f = fixture({received: dual, site: dual});
+  let assetReads = 0;
+  const configured = {...env, SITE_URL: 'https://pmot-independent-trigger.cjw-9223233.workers.dev',
+    PAGES_URL: env.SITE_URL, ASSETS: {fetch: async request => { assetReads++; return Response.json(dual); }}};
+  assert.equal((await inspect(configured, now, f.fetcher)).state, 'delivered');
+  assert.equal(assetReads, 1);
+  assert.ok(!f.requests.some(r => r.url.includes('workers.dev')));
+  dual.targets.cloudflare.status = 'failed';
+  assert.equal((await inspect(configured, now, f.fetcher)).state, 'missing');
+});
+
 test('read-only inspection never POSTs even if missing', async () => {
   const f = fixture();
   assert.equal((await execute(env, {now, fetcher: f.fetcher})).state, 'missing');
