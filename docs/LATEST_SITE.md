@@ -2,6 +2,8 @@
 
 [回 README](../README.md) · [Cloudflare 金鑰設定](CLOUDFLARE_SETUP.md) · [交付機制](DELIVERY.md)
 
+[2026-11-25 上線驗收紀錄](audits/2026-11-25-cloudflare-site.md)：實際部署時間、雙站內容驗證、重跑結果及環境限制。
+
 主網站：[pmot-independent-trigger.cjw-9223233.workers.dev](https://pmot-independent-trigger.cjw-9223233.workers.dev/)。GitHub Pages 同步保留；部署是否成功應看當次 Actions 與成功收據，文件連結存在不代表該次發布完成。
 
 ## 最新模式與歷史模式
