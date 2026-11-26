@@ -1,28 +1,28 @@
 {
-  "event": "push",
+  "event": "workflow_dispatch",
   "schedule": "",
-  "target_at": "2026-11-25T08:00:00+08:00",
-  "workflow_started_at": "2026-11-25T01:47:46Z",
-  "run_created_at": "2026-11-25T01:47:46Z",
-  "date": "2026-11-25",
-  "market_state": "not_checked",
-  "trigger_source": "push",
-  "external_requested_at": null,
+  "target_at": "2026-11-26T08:00:00+08:00",
+  "workflow_started_at": "2026-11-26T00:00:28Z",
+  "run_created_at": "2026-11-26T00:00:28Z",
+  "date": "2026-11-26",
+  "market_state": "open",
+  "trigger_source": "cloudflare",
+  "external_requested_at": "2026-11-26T00:00:25.324Z",
   "rebuild_only": false,
-  "prepared_at": "2026-11-25T09:47:55+08:00",
-  "decision": "deploy",
-  "run_url": "https://github.com/cjw9223233/PMOT/actions/runs/45528345795",
-  "run_id": "45528345795",
+  "prepared_at": "2026-11-26T08:00:35+08:00",
+  "decision": "generate",
+  "run_url": "https://github.com/cjw9223233/PMOT/actions/runs/45725561784",
+  "run_id": "45725561784",
   "run_attempt": "1",
-  "reason": "程式更新：重建既有報告",
+  "reason": "今日尚無報告",
   "report": {
-    "date": "2026-11-25",
-    "content": "data/2026-11-25_080044.html",
-    "sha256": "09a6dfe9895682d0c32f87ebcb9d71031e9bc6d014932f69c64506c4d0f8b6f7",
-    "website_sha256": "8e9c7dfe7f01abb0b914f72aea64e188eef836aac03393db9c606bc6eecba1f9"
+    "date": "2026-11-26",
+    "content": "data/2026-11-26_080044.html",
+    "sha256": "c5fba6576680dc548884aa36d1d3f8f42af6bfa338222b1b3f0678081fddcca8",
+    "website_sha256": "01e2c0fda3644dd7027cbffb410b02f6322fe0e7cf3690e46715022808849cc4"
   },
-  "generated_at": "2026-11-25T08:00:44+08:00",
-  "deployment_requested_at": "2026-11-25T09:47:55+08:00",
+  "generated_at": "2026-11-26T08:00:44+08:00",
+  "deployment_requested_at": "2026-11-26T08:00:44+08:00",
   "status": "success",
   "required_targets": [
     "github_pages",
@@ -32,21 +32,21 @@
     "github_pages": {
       "status": "verified",
       "url": "https://cjw9223233.github.io/PMOT",
-      "verified_at": "2026-11-25T01:48:28.769Z",
+      "verified_at": "2026-11-26T00:01:18.866Z",
       "files": 8
     },
     "cloudflare": {
       "status": "verified",
       "url": "https://pmot-independent-trigger.cjw-9223233.workers.dev",
-      "verified_at": "2026-11-25T01:48:29.803Z",
+      "verified_at": "2026-11-26T00:01:19.606Z",
       "files": 8
     }
   },
-  "deployment_completed_at": "2026-11-25T09:48:30+08:00",
+  "deployment_completed_at": "2026-11-26T08:01:20+08:00",
   "timeliness": {
-    "deadline_at": "2026-11-25T09:00:00+08:00",
-    "status": "late",
-    "deployment_completed_at": "2026-11-25T09:48:30+08:00",
-    "late_seconds": 2910
+    "deadline_at": "2026-11-26T09:00:00+08:00",
+    "status": "on_time",
+    "deployment_completed_at": "2026-11-26T08:01:20+08:00",
+    "late_seconds": 0
   }
 }
